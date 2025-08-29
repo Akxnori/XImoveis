@@ -67,9 +67,6 @@ O sistema permite visualizar imóveis em um **mapa interativo**, aplicar **filtr
 <img src="https://github.com/user-attachments/assets/fcd75099-2425-4b24-b503-474857e7c670" />
 </p>
 <p align="center">
-<img src="https://github.com/user-attachments/assets/6825b744-50a4-43bc-8b56-9e58a03f3b" />
-</p>
-<p align="center">
 <img src="https://github.com/user-attachments/assets/01d824d0-4bb6-4378-be19-e6e3cfc1c32f" />
 </p>
 
