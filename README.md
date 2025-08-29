@@ -36,7 +36,7 @@ O sistema permite visualizar imóveis em um **mapa interativo**, aplicar **filtr
 
 ### 🔎 Página inicial com mapa interativo
 <p align="center">
-<img src="https://github.com/user-attachments/assets/VY8bMrzEuc8ceZYScuR88d" />
+<img src="https://github.com/user-attachments/assets/19678ba3-4052-4062-8a51-f27b4d52d16e" />
 </p>
 
 ### 📋 Listagem de imóveis
