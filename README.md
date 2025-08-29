@@ -32,12 +32,65 @@ O sistema permite visualizar imóveis em um **mapa interativo**, aplicar **filtr
 
 ---
 
+## 📸 Protótipos do Sistema
+
+### 🔎 Página inicial com mapa interativo
+<p align="center">
+<img src="https://github.com/user-attachments/assets/VY8bMrzEuc8ceZYScuR88d" />
+</p>
+
+### 📋 Listagem de imóveis
+<p align="center">
+<img src="https://github.com/user-attachments/assets/TYWMcoGkysrMpQtuNUe2Ag" />
+</p>
+
+### 🏷️ Filtros de busca
+<p align="center">
+<img src="https://github.com/user-attachments/assets/UrYMPSdTWz68HVWotBsXDg" />
+</p>
+
+### 📑 Menu de cidades e tipos
+<p align="center">
+<img src="https://github.com/user-attachments/assets/HkbgzSQTGPWkaLmiyR2dro" />
+</p>
+
+### 📑 Tela de login
+<p align="center">
+<img src="https://github.com/user-attachments/assets/3d1LQtC5KK4ZK3GiMh4Ldg" />
+</p>
+
+### 📑 Tipos de usuário
+<p align="center">
+<img src="https://github.com/user-attachments/assets/V9JRz6z4gbymZCyK54ThFe" />
+</p>
+
+### 🏡 Cadastro de imóveis
+<p align="center">
+<img src="https://github.com/user-attachments/assets/3fgUN3zcp1coXB3oVXTpuS" />
+</p>
+
+### 📑 Cadastro profissional
+<p align="center">
+<img src="https://github.com/user-attachments/assets/3MAUNRG4FCo6NTyTYA7iHc" />
+</p>
+
+### 📑 Serviços e Ajuda
+<p align="center">
+<img src="https://github.com/user-attachments/assets/15WBKQ3EnoxnhfHWiaKtQy" />
+</p>
+
+### 📑 Filtros para aluguel
+<p align="center">
+<img src="https://github.com/user-attachments/assets/Q8gUrL83rh7FPjXz6KT8gL" />
+</p>
+
+---
+
 ## 📂 Estrutura do Projeto
 
-```bash
-XImoveis/
-│── frontend/        # Arquivos HTML, CSS, JS
-│── backend/         # Lógica de back-end (PHP ou Node.js)
-│── database/        # Scripts SQL (tabelas, inserts, etc.)
-│── docs/            # Documentação do projeto
-│── README.md        # Documentação inicial do repositório
+XImoveis/  
+│── frontend/        # Arquivos HTML, CSS, JS  
+│── backend/         # Lógica de back-end (PHP ou Node.js)  
+│── database/        # Scripts SQL (tabelas, inserts, etc.)  
+│── docs/            # Documentação do projeto  
+│── README.md        # Documentação inicial do repositório  
