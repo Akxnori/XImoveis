@@ -46,42 +46,31 @@ O sistema permite visualizar imóveis em um **mapa interativo**, aplicar **filtr
 
 ### 🏷️ Filtros de busca
 <p align="center">
-<img src="https://github.com/user-attachments/assets/UrYMPSdTWz68HVWotBsXDg" />
+<img src="https://github.com/user-attachments/assets/206700f5-20cf-4f9a-a49b-ed6866b0d5d8" />
 </p>
-
-### 📑 Menu de cidades e tipos
 <p align="center">
-<img src="https://github.com/user-attachments/assets/HkbgzSQTGPWkaLmiyR2dro" />
+<img src="https://github.com/user-attachments/assets/8aca994f-e753-4e82-9f03-1b154907c6a0" />
 </p>
 
 ### 📑 Tela de login
 <p align="center">
-<img src="https://github.com/user-attachments/assets/3d1LQtC5KK4ZK3GiMh4Ldg" />
+<img src="https://github.com/user-attachments/assets/afe191c6-1176-4149-b1dd-b3785af21343" />
 </p>
 
 ### 📑 Tipos de usuário
 <p align="center">
-<img src="https://github.com/user-attachments/assets/V9JRz6z4gbymZCyK54ThFe" />
+<img src="https://github.com/user-attachments/assets/3ffce580-c398-4825-af22-ba212a2daab7" />
 </p>
 
 ### 🏡 Cadastro de imóveis
 <p align="center">
-<img src="https://github.com/user-attachments/assets/3fgUN3zcp1coXB3oVXTpuS" />
+<img src="https://github.com/user-attachments/assets/fcd75099-2425-4b24-b503-474857e7c670" />
 </p>
-
-### 📑 Cadastro profissional
 <p align="center">
-<img src="https://github.com/user-attachments/assets/3MAUNRG4FCo6NTyTYA7iHc" />
+<img src="https://github.com/user-attachments/assets/6825b744-50a4-43bc-8b56-9e58a03f3b" />
 </p>
-
-### 📑 Serviços e Ajuda
 <p align="center">
-<img src="https://github.com/user-attachments/assets/15WBKQ3EnoxnhfHWiaKtQy" />
-</p>
-
-### 📑 Filtros para aluguel
-<p align="center">
-<img src="https://github.com/user-attachments/assets/Q8gUrL83rh7FPjXz6KT8gL" />
+<img src="https://github.com/user-attachments/assets/01d824d0-4bb6-4378-be19-e6e3cfc1c32f" />
 </p>
 
 ---
