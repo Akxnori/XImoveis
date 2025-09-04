@@ -53,9 +53,12 @@ Esse recurso garante **transparência e confiabilidade** para compradores, vende
 
 ## 📸 Protótipos do Sistema
 
-### 🔎 Página inicial com mapa interativo
+### 🔎 Mapa interativo
 <p align="center">
-<img src="https://github.com/user-attachments/assets/19678ba3-4052-4062-8a51-f27b4d52d16e" />
+<img src="https://github.com/user-attachments/assets/ed34efc2-150f-49f1-b409-8c0f11acb672" />
+</p>
+<p align="center">
+<img src="https://github.com/user-attachments/assets/aa345c43-a154-434e-b308-943518ecf7ba" />
 </p>
 
 ### 📋 Listagem de imóveis
