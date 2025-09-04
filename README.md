@@ -11,6 +11,25 @@ O sistema permite visualizar imóveis em um **mapa interativo**, aplicar **filtr
 
 ---
 
+## 🎯 Diferencial do Projeto
+
+O grande destaque do **XImóveis** está no **mapa interativo**.  
+O usuário pode abrir o mapa em qualquer localização e visualizar **pins** representando os imóveis disponíveis na região.  
+
+🔹 **Interatividade do mapa**  
+- Ao navegar pelo mapa, é possível dar zoom em regiões específicas ou arrastar para outras cidades.  
+- Cada imóvel cadastrado aparece como um **pin clicável**, oferecendo uma experiência prática e visual para encontrar oportunidades.  
+
+🔹 **Histórico dos imóveis**  
+- Ao clicar em um pin, além das informações atuais do imóvel, o usuário terá acesso a um **histórico detalhado**, como:  
+  - Ano em que o imóvel foi vendido.  
+  - Valor de venda em transações anteriores.  
+  - Valor atual de venda ou locação.  
+
+Esse recurso garante **transparência e confiabilidade** para compradores, vendedores e corretores, permitindo uma análise mais completa do mercado imobiliário.  
+
+---
+
 ## 🚀 Funcionalidades
 
 - Cadastro e login de corretores/imobiliárias  
