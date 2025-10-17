@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>XImóveis — Detalhes</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="css/styles.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+<body class="page-imovel">
+  <header>
+    <a class="logo" href="index.html"><img src="assets/logo.png" alt="XImóveis" style="height:28px"/></a>
+    <nav>
+      <a href="index.html">Início</a>
+      <a href="busca.html">Buscar</a>
+      <a href="mapa.html">Mapa</a>
+      <a href="cadastrar.html" class="nav-auth nav-agent">Cadastrar</a>
+      <a href="meus-imoveis.html" class="nav-auth nav-agent">Meus Imóveis</a>
+      <a href="admin-dashboard.html" class="nav-auth nav-admin">Admin</a>
+      <a href="login.html" id="authLink" class="nav-guest">Entrar</a>
+    </nav>
+  </header>
+  <div class="container">
+    <div class="hero card">
+      <img id="cover" src="https://picsum.photos/seed/cover/1200/400" alt="Imagem do imóvel" />
+    </div>
+    <div class="content">
+      <h1 id="title">Imóvel</h1>
+      <div id="price"></div>
+      <div id="meta"></div>
+      <div id="verified"></div>
+      <div id="msg" class="loading"></div>
+    </div>
+    <div class="content">
+      <div class="tabs">
+        <button data-tab="desc">Descrição</button>
+        <button data-tab="map">Mapa & Histórico</button>
+      </div>
+      <div id="tab-desc" class="tab active">
+        <p id="description"></p>
+        <div id="photos"></div>
+      </div>
+      <div id="tab-map" class="tab">
+        <div id="map" style="height:340px"></div>
+        <div id="certidaoBox" class="mt-2 card"><h3>Certidão de Matrícula — Resumo</h3><p>Imóvel livre e desembaraçado de quaisquer ônus.</p><p>Última transação: Venda em 10/10/2013.</p><p>Averbações: Atualizações cadastrais, numeração predial e troca de titularidade em 2013.</p></div>
+        <h3>Histórico</h3>
+        <ul id="history" class="history"></ul>
+      </div>
+    </div>
+  </div>
+  <footer>© XImóveis. Todos os direitos reservados.</footer>
+  <script>
+    const API = 'http://localhost:3000';
+    const id = Number(new URLSearchParams(location.search).get('id'));
+    function setTab(name){ document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active')); document.getElementById(`tab-${name}`).classList.add('active'); }
+    document.querySelectorAll('.tabs button').forEach(b=> b.addEventListener('click',()=> setTab(b.dataset.tab)));
+
+    let IMG_MAP = {};
+    async function loadImageMap(){ try { const r=await fetch('assets/property-images.json'); if(r.ok) IMG_MAP=await r.json(); } catch{} }
+    function imagesFor(pid){ const arr = IMG_MAP && IMG_MAP[pid]; return Array.isArray(arr)?arr:[] }
+    function labelType(t){ switch(String(t||'').toUpperCase()){ case 'HOUSE': return 'Casa'; case 'APARTMENT': return 'Apartamento'; case 'LAND': return 'Terreno'; default: return t||''; } }
+    function labelPurpose(x){ switch(String(x||'').toUpperCase()){ case 'SALE': return 'Venda'; case 'RENT': return 'Aluguel'; default: return x||''; } }
+    function buildHypotheticalHistory(currPrice){
+      const base = (Number(currPrice)&&Number(currPrice)>0)? Number(currPrice): 350000;
+      const now = new Date();
+      const pts=[ new Date(now.getFullYear()-8,3,15), new Date(now.getFullYear()-5,7,2), new Date(now.getFullYear()-3,10,12), new Date(now.getFullYear()-1,5,28) ];
+      const mult=[0.72,0.82,0.93,1.00];
+      const prices=mult.map(m=> Math.round(base*m));
+      const hist=[];
+      for(let i=0;i<pts.length;i++){
+        const an = new Date(pts[i]); an.setMonth(an.getMonth()-2);
+        hist.push({ event_date: an.toISOString(), event_type:'ANÚNCIO', price: prices[i], source:'anúncio', notes:'Imóvel anunciado em portal' });
+        hist.push({ event_date: pts[i].toISOString(), event_type:'VENDA', price: prices[i], source:'cartório', notes:'Escritura registrada na matrícula' });
+      }
+      hist.sort((a,b)=> new Date(a.event_date)-new Date(b.event_date));
+      return hist;
+    }
+
+    async function load(){
+      if (!id) { alert('ID não informado'); return; }
+      await loadImageMap();
+      const status = document.getElementById('msg'); if(status) status.textContent='Carregando...';
+      let data=null, history=[];
+      try { const res=await fetch(`${API}/properties/${id}`); if(res.ok){ const d=await res.json(); data=d.property; history=d.history||[]; } } catch{}
+      if(!data){ try { const r=await fetch('assets/demo-properties.json',{cache:'no-cache'}); if(r.ok){ const all=await r.json(); data = (all||[]).find(p=> Number(p.id)===id) || null; } } catch{} }
+      if(!data){ if(status) status.textContent='Imóvel não encontrado.'; return; }
+      if(status) status.textContent='';
+
+      document.getElementById('title').textContent = data.title || 'Imóvel';
+      document.getElementById('price').textContent = data.price!=null ? Number(data.price).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}) : '';
+      document.getElementById('meta').innerHTML = `${data.city||''}/${data.state||''} &bull; ${labelType(data.type)} &bull; ${labelPurpose(data.purpose)}`;
+      document.getElementById('description').textContent = data.description || 'Sem descrição.';
+      document.getElementById('verified').innerHTML = data.certificate_verified ? '<span class="badge">✓ Certidão verificada</span>' : '';
+
+      const imgs = imagesFor(String(id)); const cover=document.getElementById('cover'); if(imgs.length) cover.src=imgs[0];
+      document.getElementById('photos').innerHTML = imgs.slice(1).map(src=>`<img src="${src}" style="max-width:100%;height:auto;margin-right:8px;border-radius:8px"/>`).join('');
+
+      const lat = Number(data.lat)||-15.78, lng=Number(data.lng)||-47.93;
+      const map = L.map('map').setView([lat,lng], 15);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap'}).addTo(map);
+      L.marker([lat,lng]).addTo(map).bindPopup(data.title||'Imóvel');
+
+      if(!history.length){
+        history = [
+          { event_date: new Date().toISOString(), event_type: 'CRIADO', price: data.price, source: 'cadastro', notes: 'Imóvel cadastrado' },
+          { event_date: new Date().toISOString(), event_type: data.certificate_verified ? 'CERTIDAO_VERIFICADA' : 'CERTIDAO_PENDENTE', price: null, source: 'cartório', notes: data.certificate_verified ? 'Certidão verificada' : 'Certidão pendente' }
+        ];
+      }
+      const ul = document.getElementById('history');
+      if (!Array.isArray(history) || !history.length) {
+        history = buildHypotheticalHistory(data.price);
+      }
+      ul.innerHTML = history.map(function(h){
+        const d = new Date(h.event_date);
+        const tipo = String(h.event_type||'')
+          .replace('SALE','VENDA')
+          .replace('CREATED','CRIADO')
+          .replace('STATUS_CHANGE','STATUS')
+          .replace('PRICE_CHANGE','PREÇO')
+          .replace('NOTE','NOTA');
+        const pr = (h.price!=null) ? (' - ' + Number(h.price).toLocaleString('pt-BR',{ style:'currency', currency:'BRL' })) : '';
+        const fonte = h.source ? (' &bull; ' + h.source) : '';
+        const nota = h.notes ? (' &bull; ' + h.notes) : '';
+        return '<li>' + d.toLocaleDateString() + ' &bull; ' + tipo + pr + fonte + nota + '</li>';
+      }).join('');
+    }
+    load();
+  </script>
+</body>
+</html>

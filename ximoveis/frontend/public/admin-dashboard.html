@@ -1,0 +1,81 @@
+﻿<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>XImóveis — Painel Admin</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <script src="js/auth-ui.js"></script>
+</head>
+<body>
+  <header>
+    <a class="logo" href="index.html"><img src="assets/logo.png" alt="XImóveis" style="height:28px"/></a>
+    <nav>
+      <a href="index.html">Início</a>
+      <a href="mapa.html">Mapa</a>
+      <a href="cadastrar.html" class="nav-auth nav-agent">Cadastrar</a>
+      <a href="meus-imoveis.html" class="nav-auth nav-agent">Meus imóveis</a>
+      <a href="admin-dashboard.html" class="nav-auth nav-admin">Admin</a>
+          <a href="login.html" id="authLink" class="nav-guest">Entrar</a>
+    </nav>
+  </header>
+  <div class="container">
+    <div class="card">
+      <h2>Painel do Administrador</h2>
+      <div id="guard"></div>
+      <div id="panel" style="display:none">
+        <div class="tabs">
+          <button data-tab="pending">Pendentes</button>
+          <button data-tab="all">Todos</button>
+        </div>
+        <div id="tab-pending" class="tab active mt-2">
+          <table>
+            <thead><tr><th>ID</th><th>Título</th><th>Preço</th><th>Cidade/UF</th></tr></thead>
+            <tbody id="pendingBody"></tbody>
+          </table>
+        </div>
+        <div id="tab-all" class="tab mt-2">
+          <table>
+            <thead><tr><th>ID</th><th>Título</th><th>Status</th><th>Preço</th><th>Cidade/UF</th></tr></thead>
+            <tbody id="allBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  <footer>© XImóveis. Todos os direitos reservados.</footer>
+  <script>
+    const API = 'http://localhost:3000';
+    const { user, token } = (window.XAuthUI ? XAuthUI.getAuth() : { user:null, token:null });
+    if (!user || user.role !== 'ADMIN') {
+      document.getElementById('guard').innerHTML = '<div class="mt-2">Acesso restrito. Faça login como Admin.</div>';
+    } else {
+      document.getElementById('guard').style.display='none';
+      document.getElementById('panel').style.display='';
+    }
+    function priceBRL(v){ return v!=null ? Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}) : ''; }
+    async function fetchOrFallback(url){
+      try { const r = await fetch(url, { headers: { Authorization: `Bearer ${token}` } }); if (r.ok) return await r.json(); } catch {}
+      // Fallback: usa dataset local
+      try { const r2 = await fetch('assets/demo-properties.json'); if (r2.ok) return await r2.json(); } catch {}
+      return [];
+    }
+    async function loadPending(){
+      const items = await fetchOrFallback(`${API}/admin/properties/pending`);
+      const tbody = document.getElementById('pendingBody');
+      const list = Array.isArray(items) ? items : [];
+      tbody.innerHTML = list.map(p => `<tr><td>${p.id}</td><td>${p.title||''}</td><td>${priceBRL(p.price)}</td><td>${p.city||''}/${p.state||''}</td></tr>`).join('');
+    }
+    async function loadAll(){
+      const items = await fetchOrFallback(`${API}/admin/properties`);
+      const tbody = document.getElementById('allBody');
+      const list = Array.isArray(items) ? items : [];
+      tbody.innerHTML = list.map(p => `<tr><td>${p.id}</td><td>${p.title||''}</td><td>${p.status||'ACTIVE'}</td><td>${priceBRL(p.price)}</td><td>${p.city||''}/${p.state||''}</td></tr>`).join('');
+    }
+    if (user && user.role==='ADMIN') { loadPending(); loadAll(); }
+  </script>
+</body>
+</html>
+
+
+

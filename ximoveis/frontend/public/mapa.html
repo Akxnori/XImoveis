@@ -1,0 +1,42 @@
+﻿<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>XImóveis — Mapa</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="js/auth-ui.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  
+</head>
+<body class="page-mapa">
+  <header>
+    <a class="logo" href="index.html"><img src="assets/logo.png" alt="XImóveis" style="height:28px"/></a>
+    <nav>
+      <a href="index.html">Início</a>
+      <a href="mapa.html">Mapa</a>
+      <a href="cadastrar.html" class="nav-auth nav-agent">Cadastrar</a>
+      <a href="meus-imoveis.html" class="nav-auth nav-agent">Meus Imóveis</a>
+      <a href="admin-dashboard.html" class="nav-auth nav-admin">Admin</a>
+      <a href="login.html" id="authLink" class="nav-guest">Entrar</a>
+    </nav>
+  </header>
+  <div class="toolbar">
+    <button id="loadBtn">Carregar imóveis na área</button>
+  </div>
+  <div id="map" style="height: calc(100vh - 120px);"></div>
+  <footer>© XImóveis. Todos os direitos reservados.</footer>
+  <script>
+    if (window.XAuthUI) XAuthUI.applyNav();
+    const API = 'http://localhost:3000';
+    const map = L.map('map').setView([-15.78,-47.93], 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap'}).addTo(map);
+    const markers = L.layerGroup().addTo(map);
+    async function loadInView(){ const b=map.getBounds(); const bbox=[b.getWest(),b.getSouth(),b.getEast(),b.getNorth()].join(','); let items=[]; try{ const r=await fetch(`${API}/properties/map?bbox=${bbox}`); if (r.ok) items=await r.json(); }catch{} if(!items.length){ try{ const r2=await fetch('assets/demo-properties.json'); if(r2.ok){ const all=await r2.json(); const [w,s,e,n]=bbox.split(',').map(Number); items=all.filter(p=>p.lng>=w&&p.lng<=e&&p.lat>=s&&p.lat<=n).map(p=>({id:p.id,title:p.title,price:p.price,lat:p.lat,lng:p.lng})); } }catch{} } markers.clearLayers(); items.forEach(p=>{ const m=L.marker([p.lat,p.lng]); const price=p.price!=null?Number(p.price).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}):''; m.bindPopup(`<b>${p.title||'Imóvel'}</b><br/>${price}`); markers.addLayer(m); }); }
+    document.getElementById('loadBtn').addEventListener('click', loadInView);
+    loadInView();
+  </script>
+</body>
+</html>
+

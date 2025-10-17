@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>XImóveis - Cadastro Corretor/Imobiliária</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <script src="js/auth-ui.js"></script>
+</head>
+<body>
+  <header>
+    <a class="logo" href="index.html"><img src="assets/logo.png" alt="XImóveis" style="height:28px"/></a>
+    <nav>
+      <a href="index.html">Início</a>
+      <a href="busca.html">Buscar</a>
+      <a href="mapa.html">Mapa</a>
+      <a href="cadastrar.html" class="nav-auth nav-agent">Cadastrar</a>
+      <a href="meus-imoveis.html" class="nav-auth nav-agent">Meus imóveis</a>
+      <a href="admin-dashboard.html" class="nav-auth nav-admin">Admin</a>
+      <a href="login.html" id="authLink" class="nav-guest">Entrar</a>
+    </nav>
+  </header>
+  <div class="container">
+    <div class="card">
+      <h2>Cadastro de Corretor/Imobiliária</h2>
+      <div class="grid-2 mt-2">
+        <label>Tipo de conta</label>
+        <select id="role">
+          <option value="BROKER">Corretor(a)</option>
+          <option value="AGENCY">Imobiliária</option>
+        </select>
+        <label>Nome</label>
+        <input id="name" type="text" placeholder="Seu nome ou nome da imobiliária" />
+        <label>Email</label>
+        <input id="email" type="email" placeholder="email@exemplo.com" />
+        <label>Senha</label>
+        <input id="password" type="password" placeholder="Crie uma senha" />
+        <div id="brokerFields">
+          <div class="grid-2 mt-2"><label>CPF</label><input id="cpf" type="text" placeholder="000.000.000-00" /></div>
+          <div class="grid-2 mt-2"><label>CRECI</label><input id="creci" type="text" placeholder="Seu CRECI" /></div>
+        </div>
+        <div id="agencyFields" class="mt-2" style="display:none">
+          <div class="grid-2 mt-2"><label>CNPJ</label><input id="cnpj" type="text" placeholder="00.000.000/0000-00" /></div>
+          <div class="grid-2 mt-2"><label>CRECI Jurídico</label><input id="creciJuridico" type="text" placeholder="CRECI da imobiliária" /></div>
+          <div class="grid-2 mt-2"><label>Nome Fantasia</label><input id="agencyName" type="text" placeholder="Nome da imobiliária" /></div>
+        </div>
+      </div>
+      <div class="mt-2">
+        <button id="registerBtn" class="btn-cta">Criar conta</button>
+      </div>
+      <div id="msg" class="mt-2"></div>
+    </div>
+  </div>
+  <footer>© XImóveis. Todos os direitos reservados.</footer>
+  <script>
+    const API = 'http://localhost:3000';
+    if (window.XAuthUI) XAuthUI.applyNav();
+    const roleSel = document.getElementById('role');
+    function toggleRole(){ const isAgency = roleSel.value==='AGENCY'; document.getElementById('brokerFields').style.display = isAgency ? 'none' : ''; document.getElementById('agencyFields').style.display = isAgency ? '' : 'none'; }
+    roleSel.addEventListener('change', toggleRole); toggleRole();
+    async function doRegister(){
+      const role = roleSel.value;
+      const body = { role, name: document.getElementById('name').value.trim(), email: document.getElementById('email').value.trim(), password: document.getElementById('password').value };
+      if (role==='BROKER') { body.cpf = document.getElementById('cpf').value.trim(); body.creci = document.getElementById('creci').value.trim(); }
+      if (role==='AGENCY') { body.cnpj = document.getElementById('cnpj').value.trim(); body.creciJuridico = document.getElementById('creciJuridico').value.trim(); body.agencyName = document.getElementById('agencyName').value.trim(); }
+      const out = document.getElementById('msg'); out.textContent='';
+      try {
+        const r = await fetch(`${API}/auth/register`, { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(body) });
+        if (!r.ok) throw new Error((await r.json()).error || 'Falha no cadastro');
+        const data = await r.json();
+        out.textContent = 'Cadastro realizado com sucesso. Você já pode fazer login.';
+      } catch (e) {
+        // fallback local: apenas confirma na interface
+        out.textContent = e.message || 'Cadastro local criado. Você já pode fazer login.';
+      }
+    }
+    document.getElementById('registerBtn').addEventListener('click', doRegister);
+  </script>
+</body>
+</html>

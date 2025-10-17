@@ -1,0 +1,43 @@
+{
+  "1": [
+    "assets/properties/3/cover.jpg",
+    "assets/properties/3/2.jpg",
+    "assets/properties/3/3.jpg",
+    "assets/properties/3/4.jpg",
+    "assets/properties/3/5.jpg",
+    "assets/properties/3/6.jpg",
+    "assets/properties/3/7.jpg",
+    "assets/properties/3/8.jpg"
+  ],
+  "2": [
+    "assets/properties/5/cover.jpg",
+    "assets/properties/5/2.jpg",
+    "assets/properties/5/3.jpg",
+    "assets/properties/5/4.jpg"
+  ],
+  "3": [
+    "assets/properties/8/cover.jpg",
+    "assets/properties/8/2.jpg",
+    "assets/properties/8/3.jpg"
+  ],
+  "4": [
+    "assets/properties/9/cover.jpg",
+    "assets/properties/9/2.jpg",
+    "assets/properties/9/3.jpg",
+    "assets/properties/9/4.jpg",
+    "assets/properties/9/5.jpg",
+    "assets/properties/9/6.jpg",
+    "assets/properties/9/7.jpg",
+    "assets/properties/9/8.jpg"
+  ],
+  "5": [
+    "assets/properties/10/cover.jpg",
+    "assets/properties/10/2.jpg",
+    "assets/properties/10/3.jpg",
+    "assets/properties/10/4.jpg",
+    "assets/properties/10/5.jpg",
+    "assets/properties/10/6.jpg",
+    "assets/properties/10/7.jpg",
+    "assets/properties/10/8.jpg"
+  ]
+}

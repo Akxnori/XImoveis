@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>XIm&oacute;veis &mdash; Buscar</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <script src="js/auth-ui.js"></script>
+</head>
+<body>
+  <header>
+    <a class="logo" href="index.html"><img src="assets/logo.png" alt="XIm&oacute;veis" style="height:28px"/></a>
+    <nav>
+      <a href="index.html">In&iacute;cio</a>
+      <a href="busca.html">Buscar</a>
+      <a href="mapa.html">Mapa</a>
+      <a href="cadastrar.html" class="nav-auth nav-agent">Cadastrar</a>
+      <a href="meus-imoveis.html" class="nav-auth nav-agent">Meus Im&oacute;veis</a>
+      <a href="admin-dashboard.html" class="nav-auth nav-admin">Admin</a>
+      <a href="login.html" id="authLink" class="nav-guest">Entrar</a>
+    </nav>
+  </header>
+
+  <div class="container">
+    <section class="content mt-2">
+      <h3>Buscar</h3>
+      <div class="row" style="gap:10px; align-items:center;">
+        <select id="purpose">
+          <option value="">Finalidade</option>
+          <option value="RENT">Alugar</option>
+          <option value="SALE">Comprar</option>
+        </select>
+        <select id="ptype">
+          <option value="">Tipo</option>
+          <option value="APARTMENT">Apartamento</option>
+          <option value="HOUSE">Casa</option>
+          <option value="LAND">Terreno</option>
+        </select>
+        <input id="q" type="text" placeholder="Palavras-chave (bairro, descri&ccedil;&atilde;o)" style="flex:1" />
+        <button id="btnSearch" class="btn">Pesquisar</button>
+        <div class="order" style="margin-left:auto">
+          <span>Ordenar por</span>
+          <button id="orderToggle" class="order-toggle" type="button">Mais recentes &#9662;</button>
+          <div id="orderMenu" class="order-menu hidden">
+            <button class="order-item active" data-sort="newest">Mais recentes</button>
+            <button class="order-item" data-sort="priceAsc">Menor pre&ccedil;o</button>
+            <button class="order-item" data-sort="priceDesc">Maior pre&ccedil;o</button>
+          </div>
+        </div>
+      </div>
+      <div id="resultCount" class="mt-1"></div>
+      <div id="results" class="grid mt-2"></div>
+    </section>
+  </div>
+
+  <footer>&copy; XIm&oacute;veis. Todos os direitos reservados.</footer>
+
+  <script>
+    if (window.XAuthUI) XAuthUI.applyNav();
+
+    // Imagens do dataset (mesmo usado no index)
+    let IMG_MAP = {};
+    async function loadImageMap(){ try { const r = await fetch('assets/property-images.json'); if (r.ok) IMG_MAP = await r.json(); } catch(e){} }
+    function firstImageFor(id){ const arr = IMG_MAP[id]; return arr && arr.length ? arr[0] : `https://picsum.photos/seed/${id}/400/300`; }
+    function labelType(t){ switch(String(t||'').toUpperCase()){ case 'HOUSE': return 'Casa'; case 'APARTMENT': return 'Apartamento'; case 'LAND': return 'Terreno'; default: return t||''; } }
+    function labelPurpose(x){ switch(String(x||'').toUpperCase()){ case 'SALE': return 'Venda'; case 'RENT': return 'Aluguel'; default: return x||''; } }
+
+    function card(p){
+      const price = p.price!=null ? Number(p.price).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}) : '';
+      const badge = p.certificate_verified ? ' &bull; Certid&atilde;o verificada' : '';
+      return `<div class="card"><img src="${firstImageFor(p.id)}" alt="Imagem do im&oacute;vel"/><div class="body"><div class="title">${p.title||'Im&oacute;vel'}</div><div class="meta">${price} &bull; ${p.city||''}/${p.state||''} &bull; ${labelType(p.type)} &bull; ${labelPurpose(p.purpose)}${badge}</div><div class="actions"><a href="imovel.html?id=${p.id}">Ver detalhes</a></div></div></div>`;
+    }
+
+    // Carrega o mesmo dataset do index (sem filtros) e preenche "destaques"
+    async function loadDataset(){
+      try {
+        const r = await fetch('assets/demo-properties.json', { cache:'no-cache' });
+        if (!r.ok) throw new Error('json');
+        return await r.json();
+      } catch {
+        return [];
+      }
+    }
+
+    function applyOrder(items, sort){
+      if (sort==='priceAsc') return items.slice().sort((a,b)=> (a.price??Infinity) - (b.price??Infinity));
+      if (sort==='priceDesc') return items.slice().sort((a,b)=> (b.price??-Infinity) - (a.price??-Infinity));
+      // newest (aproxima por id maior primeiro)
+      return items.slice().sort((a,b)=> (b.id||0)-(a.id||0));
+    }
+
+    function applyFilters(all){
+      const purpose = document.getElementById('purpose').value;
+      const type = document.getElementById('ptype').value;
+      const q = document.getElementById('q').value.toLowerCase().trim();
+      let items = all.slice();
+      if (purpose) items = items.filter(p=> String(p.purpose).toUpperCase()===purpose);
+      if (type) items = items.filter(p=> String(p.type).toUpperCase()===type);
+      if (q) items = items.filter(p=> (p.title||'').toLowerCase().includes(q) || (p.description||'').toLowerCase().includes(q) || (p.city||'').toLowerCase().includes(q));
+      return items;
+    }
+
+    async function main(){
+      await loadImageMap();
+      const data = await loadDataset();
+
+      // Resultados: começam com TODO o dataset, independentemente de filtros
+      const resultsEl = document.getElementById('results');
+      const countEl = document.getElementById('resultCount');
+      let currentSort = 'newest';
+
+      async function render(){
+        // Mostra todos os im&oacute;veis do dataset por padr&atilde;o
+        let items = applyFilters(data);
+        items = applyOrder(items, currentSort);
+        countEl.textContent = `${items.length} resultado(s)`;
+        resultsEl.innerHTML = items.map(card).join('');
+      }
+
+      // Ordena&ccedil;&atilde;o
+      const orderToggle = document.getElementById('orderToggle');
+      const orderMenu = document.getElementById('orderMenu');
+      orderToggle.addEventListener('click', ()=> orderMenu.classList.toggle('hidden'));
+      orderMenu.addEventListener('click', (e)=>{
+        const it=e.target.closest('.order-item'); if(!it) return;
+        orderMenu.querySelectorAll('.order-item').forEach(b=>b.classList.remove('active'));
+        it.classList.add('active'); currentSort = it.dataset.sort; orderToggle.innerHTML = it.textContent.trim()+ ' &#9662;'; orderMenu.classList.add('hidden'); render();
+      });
+      document.addEventListener('click', (e)=>{ if(!orderMenu.contains(e.target) && e.target!==orderToggle){ orderMenu.classList.add('hidden'); }});
+
+      document.getElementById('btnSearch').addEventListener('click', render);
+      document.getElementById('q').addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); render(); }});
+      document.getElementById('purpose').addEventListener('change', render);
+      document.getElementById('ptype').addEventListener('change', render);
+
+      render();
+    }
+    main();
+  </script>
+</body>
+</html>
