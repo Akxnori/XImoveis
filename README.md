@@ -1,5 +1,3 @@
-<img width="604" height="277" alt="image" src="https://github.com/user-attachments/assets/8a4a4a19-abec-4d7a-a78d-8a2c9c32cd39" />XImóveis — Plataforma de Anúncios Imobiliários
-
 ![ximoveis](https://github.com/user-attachments/assets/5ce117d6-cdb1-48f9-b9d4-f5efc950dcc3)
 
 
