@@ -1,4 +1,4 @@
-XImóveis — Plataforma de Anúncios Imobiliários
+<img width="604" height="277" alt="image" src="https://github.com/user-attachments/assets/8a4a4a19-abec-4d7a-a78d-8a2c9c32cd39" />XImóveis — Plataforma de Anúncios Imobiliários
 
 ![ximoveis](https://github.com/user-attachments/assets/5ce117d6-cdb1-48f9-b9d4-f5efc950dcc3)
 
@@ -134,41 +134,45 @@ Solução de Problemas
 - “Cannot GET /imoveis/:id/certidao”: verifique ordem das rotas (a rota dinâmica `/:id` deve ser a última).
 - “Invalid or unexpected token” no Node: quase sempre arquivo com encoding corrompido; regravar em UTF‑8 sem BOM.
 
-Roadmap (sugestões)
-- Edição avançada de fotos (reordenar/remover) no modo editar do cadastro.
-- Cache de tiles/markers no mapa e clusterização.
-- Exportação de relatórios (CSV/Excel) para Admin.
-
 Licença e Agradecimentos
 - Uso interno/educacional. Ajuste conforme a política da sua instituição ou empresa.
 
 Apêndice A — Espaços para Imagens de Tela
-- Crie a pasta `docs/screenshots/` e adicione capturas de tela. Substitua os nomes abaixo pelos arquivos reais.
 
 1) Página Inicial (home)
-![Home](<img width="604" height="278" alt="image" src="https://github.com/user-attachments/assets/53882867-b2c6-4008-81a7-257af4db2abb" />
-)
+<img width="604" height="278" alt="image" src="https://github.com/user-attachments/assets/b7ccf899-686d-43b2-999e-f379f4d37c23" />
+<img width="604" height="278" alt="image" src="https://github.com/user-attachments/assets/0da4155d-4a85-4791-878c-c128e3715ba0" />
+<img width="604" height="275" alt="image" src="https://github.com/user-attachments/assets/ca2c730a-23c3-4583-a84a-62f397799a17" />
 
 2) Busca com Filtros
-![Busca](docs/screenshots/busca.png)
+<img width="604" height="277" alt="image" src="https://github.com/user-attachments/assets/6077bec6-0011-457d-a95c-f3029b95058d" />
 
 3) Mapa de Imóveis
-![Mapa](docs/screenshots/mapa.png)
+<img width="604" height="274" alt="image" src="https://github.com/user-attachments/assets/2bcb8c80-d655-414c-87be-6d1b9589a36a" />
 
 4) Detalhe do Imóvel
-![Detalhe](docs/screenshots/detalhe.png)
+<img width="604" height="276" alt="image" src="https://github.com/user-attachments/assets/59a85865-5dcc-497f-9def-1e8d20dbdde1" />
+<img width="604" height="267" alt="image" src="https://github.com/user-attachments/assets/1587d9c2-d8d8-4f47-80dd-36d90019af98" />
+<img width="604" height="275" alt="image" src="https://github.com/user-attachments/assets/2e6726d2-37a4-4f7e-896e-853364d8e601" />
+<img width="604" height="277" alt="image" src="https://github.com/user-attachments/assets/f72e0629-a5f7-422c-9467-d603c028e718" />
+<img width="604" height="277" alt="image" src="https://github.com/user-attachments/assets/da53df99-187e-4f37-91b3-7e495577c945" />
 
 5) Cadastro (Corretor/Imobiliária)
-![Cadastro de usuário](docs/screenshots/cadastro-usuario.png)
+<img width="604" height="279" alt="image" src="https://github.com/user-attachments/assets/3283a7d4-1028-481c-927b-4e89ed6e3d88" />
 
 6) Cadastrar Imóvel
-![Cadastrar imóvel](docs/screenshots/cadastrar-imovel.png)
+<img width="604" height="277" alt="image" src="https://github.com/user-attachments/assets/3971b799-65bf-42fb-8c59-3cb96f07329f" />
+<img width="604" height="277" alt="image" src="https://github.com/user-attachments/assets/2a113ac4-5df2-4d38-b400-ab1479b14b56" />
+<img width="604" height="277" alt="image" src="https://github.com/user-attachments/assets/be505cfb-2465-4e5e-adbd-716a57e54d56" />
 
 7) Meus Imóveis
-![Meus imóveis](docs/screenshots/meus-imoveis.png)
+<img width="604" height="277" alt="image" src="https://github.com/user-attachments/assets/67789815-fdaa-40e6-9b69-2c232499a276" />
 
 8) Painel do Administrador
-![Admin](docs/screenshots/admin.png)
+<img width="604" height="273" alt="image" src="https://github.com/user-attachments/assets/172bf263-f242-400c-ad74-83a786633e24" />
 
 9) Fluxos de Aprovação
-![Aprovação](docs/screenshots/aprovacao.png)
+<img width="604" height="273" alt="image" src="https://github.com/user-attachments/assets/39b0056f-cfec-4c08-9f45-e88f1c62a76c" />
+<img width="604" height="277" alt="image" src="https://github.com/user-attachments/assets/176464d2-d0ac-4e1d-bd4a-693f32a03086" />
+<img width="604" height="277" alt="image" src="https://github.com/user-attachments/assets/440b5427-972c-40cf-a536-6f564944ae87" />
+<img width="604" height="274" alt="image" src="https://github.com/user-attachments/assets/6e3d4fb1-9e8f-4bf5-9e95-6f59986a1939" />
