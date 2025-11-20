@@ -1,4 +1,6 @@
-﻿XImóveis — Plataforma de Anúncios Imobiliários
+<img width="801" height="330" alt="image" src="https://github.com/user-attachments/assets/26d99a0d-7c89-4e66-912b-cd9051d8740d" />
+
+ XImóveis — Plataforma de Anúncios Imobiliários
 
 Resumo
 - Aplicação web completa (frontend estático + API Node.js + MySQL) para cadastro, aprovação e busca de imóveis com integração de mapa, upload de fotos e gestão por perfis (Corretor/Imobiliária/Admin).
@@ -136,35 +138,42 @@ Roadmap (sugestões)
 - Cache de tiles/markers no mapa e clusterização.
 - Exportação de relatórios (CSV/Excel) para Admin.
 
-Licença e Agradecimentos
-- Uso interno/educacional. Ajuste conforme a política da sua instituição ou empresa.
-
-Apêndice A — Espaços para Imagens de Tela
-- Crie a pasta `docs/screenshots/` e adicione capturas de tela. Substitua os nomes abaixo pelos arquivos reais.
-
 1) Página Inicial (home)
-![Home](docs/screenshots/home.png)
+<img width="943" height="434" alt="image" src="https://github.com/user-attachments/assets/98b83ad1-45f5-4dfc-bf9d-e4e09627fb5d" />
+<img width="943" height="435" alt="image" src="https://github.com/user-attachments/assets/1006a2b5-4930-4194-b1f2-543615bd309a" />
+<img width="943" height="430" alt="image" src="https://github.com/user-attachments/assets/947385d2-1049-4b55-a57d-d36adf350703" />
 
 2) Busca com Filtros
-![Busca](docs/screenshots/busca.png)
+<img width="943" height="433" alt="image" src="https://github.com/user-attachments/assets/25bcff73-9049-4a57-8c06-54d5aeede107" />
 
 3) Mapa de Imóveis
-![Mapa](docs/screenshots/mapa.png)
+<img width="943" height="429" alt="image" src="https://github.com/user-attachments/assets/684d2a10-7f6c-45cf-968b-d1840762edbe" />
 
 4) Detalhe do Imóvel
-![Detalhe](docs/screenshots/detalhe.png)
+<img width="943" height="431" alt="image" src="https://github.com/user-attachments/assets/3b189659-9fa0-4ecb-bd09-2cd5cb7fe7e3" />
+<img width="943" height="417" alt="image" src="https://github.com/user-attachments/assets/d79f1d34-e1ac-4349-b15a-a5539f007a8c" />
+<img width="943" height="430" alt="image" src="https://github.com/user-attachments/assets/603c4616-a824-40a9-be93-8563b0376695" />
+<img width="943" height="433" alt="image" src="https://github.com/user-attachments/assets/c8c196e1-d8c5-4188-ad9e-c33b813e49d6" />
+<img width="943" height="432" alt="image" src="https://github.com/user-attachments/assets/27c142e8-a105-41ce-9734-631e6ae28692" />
 
 5) Cadastro (Corretor/Imobiliária)
-![Cadastro de usuário](docs/screenshots/cadastro-usuario.png)
+<img width="943" height="436" alt="image" src="https://github.com/user-attachments/assets/2a04ae97-476e-48a3-907b-abe4a585ef03" />
 
 6) Cadastrar Imóvel
-![Cadastrar imóvel](docs/screenshots/cadastrar-imovel.png)
+<img width="943" height="432" alt="image" src="https://github.com/user-attachments/assets/8bb3f3ef-60fa-49bc-b055-f616631b652e" />
+<img width="943" height="433" alt="image" src="https://github.com/user-attachments/assets/540ecfc0-debe-44f6-8627-8efce45cf521" />
+<img width="943" height="432" alt="image" src="https://github.com/user-attachments/assets/ae124e0f-351a-41d3-b485-e5fa4c4898b6" />
 
 7) Meus Imóveis
-![Meus imóveis](docs/screenshots/meus-imoveis.png)
+<img width="943" height="432" alt="image" src="https://github.com/user-attachments/assets/261724ee-86cf-49c7-a0ce-f8e6a499d38d" />
 
 8) Painel do Administrador
-![Admin](docs/screenshots/admin.png)
+<img width="943" height="426" alt="image" src="https://github.com/user-attachments/assets/2a996b24-fc31-4ca1-b6f6-795a9d357ea5" />
 
 9) Fluxos de Aprovação
-![Aprovação](docs/screenshots/aprovacao.png)
+<img width="943" height="427" alt="image" src="https://github.com/user-attachments/assets/43923b98-0ef7-42b0-8841-e1bec4004ced" />
+<img width="943" height="433" alt="image" src="https://github.com/user-attachments/assets/385e30a9-a62a-40c4-8b43-4d9e99b4e9f2" />
+<img width="943" height="433" alt="image" src="https://github.com/user-attachments/assets/3bc0e883-5dcd-4438-8237-38f415b443e8" />
+<img width="943" height="428" alt="image" src="https://github.com/user-attachments/assets/45e046f6-d943-43f7-acb6-5aa3b016f38d" />
+
+
