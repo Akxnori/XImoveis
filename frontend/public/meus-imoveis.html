@@ -1,0 +1,164 @@
+﻿<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>XIm&oacute;veis - Meus Im&oacute;veis</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <script defer src="js/auth-ui.js"></script>
+  <script>
+    (function(){
+      try {
+        var u = sessionStorage.getItem('authUser');
+        u = u ? JSON.parse(u) : null;
+        var role = u && String(u.role||'').toUpperCase();
+        if (!u || (role!=='BROKER' && role!=='AGENCY')) { location.replace('login.html'); }
+      } catch(e){ location.replace('login.html'); }
+    })();
+  </script>
+</head>
+<body>
+  <header>
+    <a class="logo" href="index.html"><img src="assets/logo.png" alt="XIm&oacute;veis" style="height:28px"/></a>
+    <nav>
+      <a href="index.html">In&iacute;cio</a>
+      <a href="busca.html">Buscar</a>
+      <a href="mapa.html">Mapa</a>
+      <a href="cadastrar.html" class="nav-auth nav-agent">Cadastrar</a>
+      <a href="meus-imoveis.html" class="nav-auth nav-agent">Meus im&oacute;veis</a>
+      <a href="admin-dashboard.html" class="nav-admin">Admin</a>
+      <a href="login.html" id="authLink" class="nav-guest">Entrar</a>
+    </nav>
+  </header>
+  <div class="container">
+    <div class="card">
+      <div class="space-between">
+        <h2>Meus Im&oacute;veis</h2>
+        <a class="btn" href="cadastrar.html">+ Novo</a>
+      </div>
+      <div id="alert" class="mt-2"></div>
+      <table class="mt-2">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>T&iacute;tulo</th>
+            <th>Status</th>
+            <th>Certid&atilde;o</th>
+            <th>Pre&ccedil;o</th>
+            <th>Cidade/UF</th>
+            <th>A&ccedil;&otilde;es</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div>
+  <footer>&copy; XIm&oacute;veis. Todos os direitos reservados.</footer>
+
+  <script>
+    function applyNavSafe(){ try { if (window.XAuthUI && typeof XAuthUI.applyNav==='function') XAuthUI.applyNav(); } catch{} }
+    document.addEventListener('DOMContentLoaded', applyNavSafe);
+    window.addEventListener('load', applyNavSafe);
+    setTimeout(applyNavSafe, 0);
+    const API = window.API_BASE || ((window.location.origin && window.location.origin !== 'null') ? window.location.origin : 'http://localhost:3000');
+    const token = sessionStorage.getItem('authToken');
+    const user = sessionStorage.getItem('authUser') ? JSON.parse(sessionStorage.getItem('authUser')) : null;
+    const alertBox = document.getElementById('alert');
+    if (!token || !user) {
+      alertBox.textContent = 'Voc&ecirc; precisa estar logado como Corretor/Imobili&aacute;ria para ver seus im&oacute;veis.';
+    }
+
+    function priceBRL(v){ return v!=null ? Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}) : ''; }
+    function badgeStatus(s){
+      const map = { PENDING: 'Pendente', ACTIVE: 'Ativo', REJECTED: 'Rejeitado', SOLD: 'Vendido', DRAFT: 'Rascunho' };
+      return map[s] || s;
+    }
+    function badgeCert(c){
+      if (!c) return '';
+      const map = { PENDING: 'Aguardando', APPROVED: 'Aprovada', REJECTED: 'Rejeitada' };
+      return map[c] || c;
+    }
+
+    async function load() {
+      if (!token) return;
+      try{
+        const res = await fetch(`${API}/imoveis/meus`, { headers: { Authorization: `Bearer ${token}` } });
+        if (!res.ok) throw new Error('Falha ao carregar');
+        const items = await res.json();
+        const tbody = document.getElementById('tbody');
+        if (!Array.isArray(items) || !items.length) {
+          tbody.innerHTML = `<tr><td colspan="7">Nenhum imóvel encontrado para sua conta.</td></tr>`;
+          return;
+        }
+        tbody.innerHTML = items.map(p => {
+          const view = p.status === 'ACTIVE' ? `<a class="btn" href="imovel.html?id=${p.id}">Ver</a>` : '';
+          const del = `<button class="btn-outline" data-action="del" data-id="${p.id}">Excluir</button>`;
+          const cert = badgeCert(p.cert_status) + (p.cert_notes ? ` - ${p.cert_notes}` : '');
+          return `<tr>
+            <td>${p.id}</td>
+            <td>${p.title || ''}</td>
+            <td>${badgeStatus(p.status)}</td>
+            <td>${cert}</td>
+            <td>${priceBRL(p.price)}</td>
+            <td>${p.city}/${p.state}</td>
+            <td><div class="table-actions">${view}<a class="btn-outline" href="cadastrar.html?id=${p.id}&mode=edit">Editar</a>${del}</div></td>
+          </tr>`;
+        }).join('');
+        // Delegação para excluir
+        tbody.addEventListener('click', async (e)=>{
+          const btn = e.target.closest('[data-action="del"][data-id]');
+          if (!btn) return;
+          const id = Number(btn.getAttribute('data-id'));
+          if (!id) return;
+          if (!confirm('Tem certeza que deseja excluir este imóvel? Esta ação não pode ser desfeita.')) return;
+          try {
+            const r = await fetch(`${API}/imoveis/${id}`, { method:'DELETE', headers:{ Authorization: `Bearer ${token}` } });
+            if (!r.ok) throw new Error('Falha ao excluir');
+            // Remove linha da tabela
+            const tr = btn.closest('tr'); if (tr) tr.remove();
+            if (!document.querySelector('#tbody tr')) {
+              document.getElementById('tbody').innerHTML = '<tr><td colspan="7">Você não possui imóveis.</td></tr>';
+            }
+          } catch(err){ alertBox.textContent = err.message || 'Erro ao excluir.'; }
+        });
+      } catch(e){ alertBox.textContent = e.message || 'Erro ao carregar.'; }
+    }
+
+    document.addEventListener('DOMContentLoaded', load);
+    // Listener separado para edição (evita conflitos com o antigo de exclusão)
+    document.addEventListener('DOMContentLoaded', ()=>{
+      const tbody = document.getElementById('tbody');
+      if (!tbody) return;
+      tbody.addEventListener('click', async (e)=>{
+        const editBtn = e.target.closest('[data-action="edit"][data-id]');
+        if (!editBtn) return;
+        const id = Number(editBtn.getAttribute('data-id'));
+        if (!id) return;
+        try {
+          const r = await fetch(`${API}/imoveis/${id}`);
+          const j = r.ok ? await r.json() : null;
+          const p = j && (j.property || j);
+          const title = prompt('Título do anúncio:', p && p.title ? p.title : '');
+          if (title==null) return;
+          const priceStr = prompt('Preço (R$):', p && p.price!=null ? String(p.price) : '');
+          if (priceStr==null) return;
+          const description = prompt('Descrição:', p && p.description ? p.description : '');
+          if (description==null) return;
+          if (!confirm('Ao salvar, o imóvel será enviado novamente para aprovação do administrador. Continuar?')) return;
+          const body = { title, description, price: Number(priceStr) };
+          const up = await fetch(`${API}/imoveis/${id}`, { method:'PUT', headers:{ 'Content-Type':'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(body) });
+          if (!up.ok) throw new Error('Falha ao salvar edição');
+          const tr = editBtn.closest('tr');
+          if (tr) {
+            tr.children[1].textContent = title || '';
+            tr.children[2].textContent = 'Pendente';
+            tr.children[4].textContent = isFinite(body.price) ? Number(body.price).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}) : '';
+          }
+        } catch(err){ alertBox.textContent = err.message || 'Erro ao editar.'; }
+      });
+    });
+  </script>
+</body>
+</html>
+
+

@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>XIm&oacute;veis - Mapa</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="vendor/leaflet/leaflet.css" />
+  <script defer src="js/auth-ui.js"></script>
+  <script src="vendor/leaflet/leaflet.js"></script>
+</head>
+<body class="page-mapa">
+  <header>
+    <a class="logo" href="index.html"><img src="assets/logo.png" alt="XIm&oacute;veis" style="height:28px"/></a>
+    <nav>
+      <a href="index.html">In&iacute;cio</a>
+      <a href="busca.html">Buscar</a>
+      <a href="mapa.html">Mapa</a>
+      <a href="cadastrar.html" class="nav-auth nav-agent">Cadastrar</a>
+      <a href="meus-imoveis.html" class="nav-auth nav-agent">Meus im&oacute;veis</a>
+      <a href="admin.html" class="nav-admin">Admin</a>
+      <a href="login.html" id="authLink" class="nav-guest">Entrar</a>
+    </nav>
+  </header>
+  <div class="toolbar">
+    <button id="loadBtn">Carregar im&oacute;veis na &aacute;rea</button>
+  </div>
+  <div id="map" style="height: calc(100vh - 120px);"></div>
+  <footer>&copy; XIm&oacute;veis. Todos os direitos reservados.</footer>
+  <script>
+    function applyNavSafe(){ try { if (window.XAuthUI && typeof XAuthUI.applyNav==='function') XAuthUI.applyNav(); } catch{} }
+    document.addEventListener('DOMContentLoaded', applyNavSafe);
+    window.addEventListener('load', applyNavSafe);
+    setTimeout(applyNavSafe, 0);
+    const API = window.API_BASE || ((window.location.origin && window.location.origin !== 'null') ? window.location.origin : 'http://localhost:3000');
+    try { if (L && L.Icon && L.Icon.Default){ L.Icon.Default.imagePath = ''; L.Icon.Default.mergeOptions({ iconUrl:'/vendor/leaflet/images/marker-icon.png', iconRetinaUrl:'/vendor/leaflet/images/marker-icon-2x.png', shadowUrl:'/vendor/leaflet/images/marker-shadow.png' }); } } catch{}
+    const map = L.map('map').setView([-15.78,-47.93], 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap'}).addTo(map);
+    const markers = L.layerGroup().addTo(map);
+    async function loadInView(){
+      const b = map.getBounds();
+      const bbox = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()].join(',');
+      let items = [];
+      try {
+        const r = await fetch(`${API}/imoveis/map?bbox=${bbox}`);
+        if (r.ok) items = await r.json();
+      } catch {}
+      markers.clearLayers();
+      items.forEach(p => {
+        const m = L.marker([p.lat, p.lng]);
+        const price = p.price!=null ? Number(p.price).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}) : '';
+        const link = `imovel.html?id=${encodeURIComponent(p.id)}`;
+        const html = `
+          <div>
+            <div style="font-weight:700;">${(p.title||'Im&oacute;vel')}</div>
+            <div>${price}</div>
+            <div class="mt-1"><a href="${link}">Ver detalhes</a></div>
+          </div>`;
+        m.bindPopup(html);
+        markers.addLayer(m);
+      });
+    }
+    document.getElementById('loadBtn').addEventListener('click', loadInView);
+    loadInView();
+  </script>
+</body>
+</html>

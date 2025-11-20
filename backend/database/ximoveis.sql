@@ -1,0 +1,127 @@
+-- XImóveis Database Schema (MySQL 8)
+-- Produção: sem dados de demonstração
+
+DROP DATABASE IF EXISTS ximoveis;
+CREATE DATABASE ximoveis CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE ximoveis;
+
+-- Agencies
+CREATE TABLE agencies (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  email VARCHAR(255),
+  phone VARCHAR(50),
+  cnpj VARCHAR(18) NULL,
+  creci_juridico VARCHAR(30) NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Users
+CREATE TABLE users (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  agency_id BIGINT UNSIGNED NULL,
+  name VARCHAR(255) NOT NULL,
+  email VARCHAR(255) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
+  role ENUM('ADMIN','BROKER','AGENCY') NOT NULL DEFAULT 'BROKER',
+  cpf VARCHAR(14) NULL,
+  creci VARCHAR(30) NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_users_agency FOREIGN KEY (agency_id) REFERENCES agencies(id) ON DELETE SET NULL
+);
+
+-- Properties
+CREATE TABLE properties (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  agency_id BIGINT UNSIGNED NULL,
+  user_id BIGINT UNSIGNED NULL,
+  title VARCHAR(255) NOT NULL,
+  description TEXT NULL,
+  price DECIMAL(15,2) NULL,
+  bedrooms INT DEFAULT 0,
+  bathrooms INT DEFAULT 0,
+  suites INT DEFAULT 0,
+  parking_spaces INT DEFAULT 0,
+  area_m2 DECIMAL(10,2) NULL,
+  lot_size_m2 DECIMAL(10,2) NULL,
+  year_built INT NULL,
+  floor INT NULL,
+  maintenance_fee DECIMAL(10,2) NULL,
+  iptu DECIMAL(10,2) NULL,
+  address VARCHAR(255) NULL,
+  neighborhood VARCHAR(120) NULL,
+  city VARCHAR(120) NOT NULL,
+  state VARCHAR(2) NOT NULL,
+  purpose ENUM('SALE','RENT') NOT NULL,
+  type VARCHAR(50) NOT NULL,
+  status ENUM('DRAFT','PENDING','ACTIVE','REJECTED','SOLD') NOT NULL DEFAULT 'DRAFT',
+  certificate_required BOOLEAN NOT NULL DEFAULT TRUE,
+  certificate_verified BOOLEAN NOT NULL DEFAULT FALSE,
+  location POINT SRID 4326 NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_properties_status (status),
+  INDEX idx_properties_city_state (city, state),
+  INDEX idx_properties_price (price),
+  INDEX idx_properties_purpose_type (purpose, type),
+  INDEX idx_properties_neighborhood (neighborhood),
+  INDEX idx_properties_bed_bath (bedrooms, bathrooms),
+  INDEX idx_properties_area (area_m2),
+  INDEX idx_properties_suites (suites),
+  INDEX idx_properties_parking (parking_spaces),
+  SPATIAL INDEX spx_properties_location (location),
+  CONSTRAINT fk_properties_agency FOREIGN KEY (agency_id) REFERENCES agencies(id) ON DELETE SET NULL,
+  CONSTRAINT fk_properties_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+);
+
+-- Property images (placeholder for future uploads)
+CREATE TABLE property_images (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  property_id BIGINT UNSIGNED NOT NULL,
+  image_path VARCHAR(500) NOT NULL,
+  is_cover BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_property_images_property (property_id),
+  CONSTRAINT fk_prop_images_property FOREIGN KEY (property_id) REFERENCES properties(id) ON DELETE CASCADE
+);
+
+-- Property history
+CREATE TABLE property_history (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  property_id BIGINT UNSIGNED NOT NULL,
+  event_date DATETIME NOT NULL,
+  event_type ENUM('CREATED','PRICE_CHANGE','STATUS_CHANGE','NOTE') NOT NULL,
+  price DECIMAL(15,2) NULL,
+  source VARCHAR(255) NULL,
+  notes TEXT NULL,
+  INDEX idx_prop_hist_property (property_id),
+  INDEX idx_prop_hist_date (event_date),
+  CONSTRAINT fk_prop_hist_property FOREIGN KEY (property_id) REFERENCES properties(id) ON DELETE CASCADE
+);
+
+-- Property certificates (encrypted storage support)
+CREATE TABLE property_certificates (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  property_id BIGINT UNSIGNED NOT NULL,
+  filename VARCHAR(255) NOT NULL,
+  path VARCHAR(500) NOT NULL,
+  mimetype VARCHAR(100) NOT NULL,
+  size BIGINT NOT NULL,
+  sha256_hash CHAR(64) NOT NULL,
+  verification_status ENUM('PENDING','APPROVED','REJECTED') NOT NULL DEFAULT 'PENDING',
+  verified_by BIGINT UNSIGNED NULL,
+  verified_at DATETIME NULL,
+  notes TEXT NULL,
+  uploaded_at DATETIME NOT NULL,
+  encrypted BOOLEAN NOT NULL DEFAULT TRUE,
+  enc_algo VARCHAR(50) NULL,
+  enc_iv VARBINARY(32) NULL,
+  enc_auth_tag VARBINARY(32) NULL,
+  INDEX idx_prop_cert_property (property_id),
+  INDEX idx_prop_cert_verif_status (verification_status),
+  CONSTRAINT fk_prop_cert_property FOREIGN KEY (property_id) REFERENCES properties(id) ON DELETE CASCADE,
+  CONSTRAINT fk_prop_cert_verified_by FOREIGN KEY (verified_by) REFERENCES users(id) ON DELETE SET NULL
+);
+
+-- Optional: create an initial admin after import using API POST /auth/seed-admin
+

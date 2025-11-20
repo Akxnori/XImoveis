@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>XIm&oacute;veis - Buscar</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <script defer src="js/auth-ui.js"></script>
+  <script defer src="js/locations-br.js"></script>
+</head>
+<body>
+  <header>
+    <a class="logo" href="index.html"><img src="assets/logo.png" alt="XIm&oacute;veis" style="height:28px"/></a>
+    <nav>
+      <a href="index.html">In&iacute;cio</a>
+      <a href="busca.html">Buscar</a>
+      <a href="mapa.html">Mapa</a>
+      <a href="cadastrar.html" class="nav-auth nav-agent">Cadastrar</a>
+      <a href="meus-imoveis.html" class="nav-auth nav-agent">Meus im&oacute;veis</a>
+      <a href="admin-dashboard.html" class="nav-admin">Admin</a>
+      <a href="login.html" id="authLink" class="nav-guest">Entrar</a>
+    </nav>
+  </header>
+
+  <div class="container">
+    <div class="layout mt-2">
+      <aside class="filters">
+        <h3>Filtros</h3>
+        <div>
+          <label for="f_purpose">Finalidade</label>
+          <select id="f_purpose">
+            <option value="">Todas</option>
+            <option value="RENT">Alugar</option>
+            <option value="SALE">Comprar</option>
+          </select>
+        </div>
+        <div>
+          <label for="f_type">Tipo</label>
+          <select id="f_type">
+            <option value="">Todos</option>
+            <option value="APARTMENT">Apartamento</option>
+            <option value="HOUSE">Casa</option>
+            <option value="LAND">Terreno</option>
+          </select>
+        </div>
+        <div class="row">
+          <div style="flex:1">
+            <label for="f_minPrice">Pre&ccedil;o m&iacute;nimo (R$)</label>
+            <input id="f_minPrice" type="number" min="0" step="1000" placeholder="0" />
+          </div>
+          <div style="flex:1">
+            <label for="f_maxPrice">Pre&ccedil;o m&aacute;ximo (R$)</label>
+            <input id="f_maxPrice" type="number" min="0" step="1000" placeholder="Qualquer" />
+          </div>
+        </div>
+        <div class="row">
+          <div style="flex:1">
+            <label for="f_minBedrooms">Quartos (m&iacute;n.)</label>
+            <input id="f_minBedrooms" type="number" min="0" step="1" placeholder="0" />
+          </div>
+          <div style="flex:1">
+            <label for="f_minBathrooms">Banheiros (m&iacute;n.)</label>
+            <input id="f_minBathrooms" type="number" min="0" step="1" placeholder="0" />
+          </div>
+        </div>
+        <div class="row">
+          <div style="width:140px">
+            <label for="f_state">UF</label>
+            <select id="f_state"></select>
+          </div>
+          <div style="flex:1">
+            <label for="f_city">Cidade</label>
+            <select id="f_city" disabled></select>
+          </div>
+        </div>
+        <div class="row mt-2">
+          <input id="q" type="text" placeholder="Palavras‑chave (bairro, descri&ccedil;&atilde;o)" style="flex:1" />
+          <button id="btnSearch" class="btn" style="margin-left:8px">Buscar</button>
+        </div>
+        <div class="row mt-1">
+          <button id="btnApply" class="btn">Aplicar</button>
+          <button id="btnClear" class="btn-outline" style="margin-left:8px">Limpar</button>
+        </div>
+      </aside>
+      <main>
+        <div class="space-between mb-1">
+          <h2>Resultados</h2>
+          <div>
+            <button id="orderToggle" class="btn-outline">Mais recentes &#9662;</button>
+            <div id="orderMenu" class="dropdown hidden" style="min-width:190px">
+              <div class="order-item active" data-sort="newest">Mais recentes</div>
+              <div class="order-item" data-sort="priceAsc">Menor preço</div>
+              <div class="order-item" data-sort="priceDesc">Maior preço</div>
+            </div>
+          </div>
+        </div>
+        <div id="resultCount" class="mb-1"></div>
+        <div id="results" class="grid"></div>
+      </main>
+    </div>
+  </div>
+
+  <footer>© XIm&oacute;veis. Todos os direitos reservados.</footer>
+
+  <script>
+    const API = window.API_BASE || ((window.location.origin && window.location.origin !== 'null') ? window.location.origin : 'http://localhost:3000');
+    document.addEventListener('DOMContentLoaded', ()=>{ try { if (window.XAuthUI) XAuthUI.applyNav(); } catch{} });
+
+    function card(p){
+      const price = p.price!=null ? Number(p.price).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}) : '';
+      const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='400' height='300'>`
+        + `<rect width='400' height='300' fill='#e5e7eb'/>`
+        + `<text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='#6b7280' font-family='Arial' font-size='18'>Imóvel</text>`
+        + `</svg>`;
+      const img = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+      // Se houver capa vinda da API, usa-a; caso contrário, usa o placeholder SVG
+      const coverRaw = p.cover_path || (Array.isArray(p.photos) && p.photos.length ? p.photos[0] : '');
+      let displayImg = img;
+      if (coverRaw) {
+        const s = String(coverRaw);
+        displayImg = /^https?:\/\//i.test(s) ? s : `${API}${s.startsWith('/')?s:`/files/${s}`}`;
+      }
+      return `
+        <div class="card">
+          <img src="${displayImg}" alt="Imagem do im&oacute;vel"/>
+          <div class="body">
+            <div class="title">${p.title||'Imóvel'}</div>
+            <div class="meta">${price} - ${p.city||''}/${p.state||''}</div>
+            <div class="actions">
+              <a href="imovel.html?id=${p.id}">Ver detalhes</a>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    async function loadDataset(){
+      try { const r = await fetch(`${API}/imoveis`); if (!r.ok) throw new Error('api'); return await r.json(); } catch { return []; }
+    }
+    function applyFilters(data){
+      let items = Array.isArray(data) ? data.slice() : [];
+      const purpose = document.getElementById('f_purpose').value;
+      const type = document.getElementById('f_type').value;
+      const minPrice = Number(document.getElementById('f_minPrice').value||0);
+      const maxPrice = Number(document.getElementById('f_maxPrice').value||0);
+      const minBedrooms = Number(document.getElementById('f_minBedrooms').value||0);
+      const minBathrooms = Number(document.getElementById('f_minBathrooms').value||0);
+      const uf = (document.getElementById('f_state').value||'').toUpperCase();
+      const city = document.getElementById('f_city').value||'';
+      const q = (document.getElementById('q').value||'').trim().toLowerCase();
+      if (purpose) items = items.filter(p=> String(p.purpose||'').toUpperCase()===purpose);
+      if (type) items = items.filter(p=> String(p.type||'').toUpperCase()===type);
+      if (minPrice) items = items.filter(p=> Number(p.price||0) >= minPrice);
+      if (maxPrice) items = items.filter(p=> Number(p.price||0) <= maxPrice);
+      if (minBedrooms) items = items.filter(p=> Number(p.bedrooms||0) >= minBedrooms);
+      if (minBathrooms) items = items.filter(p=> Number(p.bathrooms||0) >= minBathrooms);
+      if (uf) items = items.filter(p=> String(p.state||'').toUpperCase()===uf);
+      if (city) items = items.filter(p=> String(p.city||'').toLowerCase()===city.toLowerCase());
+      if (q) items = items.filter(p=> (p.title||'').toLowerCase().includes(q) || (p.description||'').toLowerCase().includes(q) || (p.city||'').toLowerCase().includes(q));
+      return items;
+    }
+    function applyOrder(items, sort){
+      const arr = items.slice();
+      if (sort==='priceAsc') arr.sort((a,b)=> Number(a.price||0)-Number(b.price||0));
+      else if (sort==='priceDesc') arr.sort((a,b)=> Number(b.price||0)-Number(a.price||0));
+      else arr.sort((a,b)=> Number(b.id||0)-Number(a.id||0));
+      return arr;
+    }
+
+    let PREFILL_UF = '', PREFILL_CITY = '';
+    async function main(){
+      const data = await loadDataset();
+      const resultsEl = document.getElementById('results');
+      const countEl = document.getElementById('resultCount');
+      let currentSort = 'newest';
+      async function render(){
+        let items = applyFilters(data);
+        items = applyOrder(items, currentSort);
+        countEl.textContent = `${items.length} resultado(s)`;
+        resultsEl.innerHTML = items.map(card).join('');
+      }
+      const orderToggle = document.getElementById('orderToggle');
+      const orderMenu = document.getElementById('orderMenu');
+      orderToggle.addEventListener('click', ()=> orderMenu.classList.toggle('hidden'));
+      orderMenu.addEventListener('click', (e)=>{
+        const it=e.target.closest('.order-item'); if(!it) return;
+        orderMenu.querySelectorAll('.order-item').forEach(b=>b.classList.remove('active'));
+        it.classList.add('active'); currentSort = it.dataset.sort; orderToggle.innerHTML = it.textContent.trim()+ ' &#9662;'; orderMenu.classList.add('hidden'); render();
+      });
+      document.addEventListener('click', (e)=>{ if(!orderMenu.contains(e.target) && e.target!==orderToggle){ orderMenu.classList.add('hidden'); }});
+      document.getElementById('btnSearch').addEventListener('click', render);
+      document.getElementById('q').addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); render(); }});
+      const sideControls = ['f_purpose','f_type','f_minPrice','f_maxPrice','f_minBedrooms','f_minBathrooms','f_city','f_state'];
+      sideControls.forEach(id=> document.getElementById(id).addEventListener('change', render));
+      document.getElementById('btnApply').addEventListener('click', render);
+      document.getElementById('btnClear').addEventListener('click', ()=>{ sideControls.forEach(id=>{ const el=document.getElementById(id); if(el.tagName==='SELECT') el.selectedIndex=0; else el.value=''; }); render(); });
+      function prefillFromQuery(){ try { const usp=new URLSearchParams(location.search); const purpose=(usp.get('purpose')||'').toUpperCase(); const type=(usp.get('type')||'').toUpperCase(); const q=usp.get('q')||''; const st=(usp.get('state')||'').toUpperCase(); const city=usp.get('city')||''; if (purpose && ['RENT','SALE'].includes(purpose)) { const sel=document.getElementById('f_purpose'); if(sel) sel.value=purpose; } if (type && ['APARTMENT','HOUSE','LAND'].includes(type)) { const sel=document.getElementById('f_type'); if(sel) sel.value=type; } if (q) { const inp=document.getElementById('q'); if(inp) inp.value=decodeURIComponent(q); } PREFILL_UF = st; PREFILL_CITY = city; } catch {} }
+      prefillFromQuery(); if (window.LocationsBR) { LocationsBR.attachLinked('f_state','f_city', PREFILL_UF, PREFILL_CITY); }
+      render();
+    }
+    main();
+  </script>
+</body>
+</html>

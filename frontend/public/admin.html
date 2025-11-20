@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>XIm&oacute;veis - Admin</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <script defer src="js/auth-ui.js"></script>
+  <script>
+    (function(){
+      try {
+        var u = sessionStorage.getItem('authUser');
+        u = u ? JSON.parse(u) : null;
+        var role = u && String(u.role||'').toUpperCase();
+        if (!u || role!=='ADMIN') { location.replace('login.html'); }
+      } catch(e){ location.replace('login.html'); }
+    })();
+  </script>
+</head>
+<body class="page-admin">
+  <header>
+    <a class="logo" href="index.html"><img src="assets/logo.png" alt="XIm&oacute;veis" style="height:28px"/></a>
+    <nav>
+      <a href="index.html">In&iacute;cio</a>
+      <a href="busca.html">Buscar</a>
+      <a href="mapa.html">Mapa</a>
+      <a href="cadastrar.html" class="nav-auth nav-agent">Cadastrar</a>
+      <a href="meus-imoveis.html" class="nav-auth nav-agent">Meus im&oacute;veis</a>
+      <a href="admin.html" class="nav-admin">Admin</a>
+      <a href="login.html" id="authLink" class="nav-guest">Entrar</a>
+    </nav>
+  </header>
+  <div class="container">
+    <div class="card">
+      <h2>Painel Administrativo</h2>
+      <p class="mt-1">Selecione uma das se&ccedil;&otilde;es abaixo para gerenciar o conte&uacute;do do XIm&oacute;veis.</p>
+      <div class="mt-2" style="display:flex; flex-wrap:wrap; gap:8px;">
+        <button class="tab-btn active" data-panel="pending">Aprovar/Reprovar An&uacute;ncios</button>
+        <button class="tab-btn" data-panel="manage">Gest&atilde;o de An&uacute;ncios</button>
+        <button class="tab-btn" data-panel="users">Gest&atilde;o de Usu&aacute;rios</button>
+      </div>
+    </div>
+
+    <section id="panel-pending" class="admin-panel">
+      <div class="card mt-2">
+        <h3 class="mb-1">An&uacute;ncios pendentes</h3>
+        <table>
+          <thead>
+            <tr>
+              <th style="width:70px">ID</th>
+              <th>T&iacute;tulo</th>
+              <th style="width:140px">Cidade/UF</th>
+              <th style="width:140px">Valor</th>
+              <th style="width:160px">Data de envio</th>
+              <th style="width:260px">A&ccedil;&otilde;es</th>
+            </tr>
+          </thead>
+          <tbody id="tb-pending"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="panel-manage" class="admin-panel hidden">
+      <div class="card mt-2">
+        <div class="space-between">
+          <h3>Gest&atilde;o de An&uacute;ncios</h3>
+          <small>Visualize e altere qualquer an&uacute;ncio ativo ou pendente.</small>
+        </div>
+        <table class="mt-2">
+          <thead>
+            <tr>
+              <th style="width:70px">ID</th>
+              <th>T&iacute;tulo</th>
+              <th style="width:110px">Status</th>
+              <th style="width:150px">Cidade/UF</th>
+              <th style="width:140px">Valor</th>
+              <th style="width:260px">A&ccedil;&otilde;es</th>
+            </tr>
+          </thead>
+          <tbody id="tb-manage"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="panel-users" class="admin-panel hidden">
+      <div class="card mt-2">
+        <div class="space-between">
+          <h3>Gest&atilde;o de Usu&aacute;rios</h3>
+          <small>Consulte informa&ccedil;&otilde;es dos corretores, imobili&aacute;rias e administradores.</small>
+        </div>
+        <table class="mt-2">
+          <thead>
+            <tr>
+              <th style="width:70px">ID</th>
+              <th>Nome</th>
+              <th>Email</th>
+              <th style="width:130px">Telefone</th>
+              <th style="width:120px">Perfil</th>
+              <th style="width:150px">Imobili&aacute;ria</th>
+              <th style="width:120px">An&uacute;ncios</th>
+            </tr>
+          </thead>
+          <tbody id="tb-users"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <!-- Modal de Detalhes -->
+  <div id="modal" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,.45); display:flex; align-items:flex-start; justify-content:center; padding:40px 12px; z-index:3000; overflow:auto;">
+    <div class="panel" style="max-width:980px; width:100%; background:#fff; border-radius:12px;">
+      <div class="space-between">
+        <h3 id="md-title" class="mb-2">Detalhes do Im&oacute;vel</h3>
+        <button id="md-close" class="btn-outline">Fechar</button>
+      </div>
+      <div id="md-content">
+        <!-- conte&uacute;do preenchido por JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="hidden" style="position:fixed; left:50%; transform:translateX(-50%); bottom:18px; background:#111; color:#fff; padding:10px 14px; border-radius:10px; box-shadow:0 8px 22px rgba(0,0,0,.25); z-index:4000;"></div>
+
+  <script>
+    function applyNavSafe(){ try { if (window.XAuthUI && typeof XAuthUI.applyNav==='function') XAuthUI.applyNav(); } catch{} }
+    document.addEventListener('DOMContentLoaded', applyNavSafe);
+    window.addEventListener('load', applyNavSafe);
+    setTimeout(applyNavSafe, 0);
+  </script>
+  <script src="js/admin.js"></script>
+  <footer>&copy; XIm&oacute;veis. Todos os direitos reservados.</footer>
+</body>
+</html>

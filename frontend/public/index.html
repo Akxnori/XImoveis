@@ -1,0 +1,141 @@
+﻿<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>XIm&oacute;veis - In&iacute;cio</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="vendor/leaflet/leaflet.css" />
+  <script defer src="js/auth-ui.js"></script>
+  <script src="vendor/leaflet/leaflet.js"></script>
+</head>
+<body>
+  <header>
+    <a class="logo" href="index.html"><img src="assets/logo.png" alt="XIm&oacute;veis" style="height:32px"/></a>
+    <nav>
+      <a href="index.html">In&iacute;cio</a>
+      <a href="busca.html">Buscar</a>
+      <a href="mapa.html">Mapa</a>
+      <a href="cadastrar.html" class="nav-auth nav-agent">Cadastrar</a>
+      <a href="meus-imoveis.html" class="nav-auth nav-agent">Meus im&oacute;veis</a>
+      <a href="admin.html" class="nav-admin">Admin</a>
+      <a href="login.html" id="authLink" class="nav-guest">Entrar</a>
+    </nav>
+  </header>
+
+  <section class="hero-landing">
+    <div class="title">Encontre seu lar</div>
+    <div class="search-wrap">
+      <div class="pill-tabs">
+        <button type="button" id="tabComprar" class="active">Comprar</button>
+        <button type="button" id="tabAlugar">Alugar</button>
+      </div>
+      <div class="searchbox">
+        <select id="heroType">
+          <option value="">Tipo de imóvel</option>
+          <option value="APARTMENT">Apartamento</option>
+          <option value="HOUSE">Casa</option>
+          <option value="LAND">Terreno</option>
+        </select>
+        <input id="heroQuery" type="text" placeholder="Digite cidades, bairros ou características (ex: piscina)" style="flex:1" />
+        <button id="heroBuscar" class="cta">Buscar</button>
+      </div>
+    </div>
+  </section>
+
+  <div class="container">
+    <section class="content">
+      <h2 class="mb-2">Im&oacute;veis em destaque</h2>
+      <div class="carousel">
+        <div id="featured" class="carousel-track"></div>
+      </div>
+    </section>
+
+    <section class="content mt-3">
+      <h2 class="mb-2">Mapa</h2>
+      <p>Veja im&oacute;veis ativos no mapa interativo.</p>
+      <div id="homeMap" style="height:380px; border-radius:8px; border:1px solid var(--border);"></div>
+      <div class="mt-2"><a class="btn" href="mapa.html">Abrir mapa completo</a></div>
+    </section>
+  </div>
+
+  <footer>&copy; XIm&oacute;veis. Todos os direitos reservados.</footer>
+
+  <script>
+    const API = window.API_BASE || ((window.location.origin && window.location.origin !== 'null') ? window.location.origin : 'http://localhost:3000');
+    // Tabs hero
+    let heroPurpose = 'SALE';
+    const tabAlugar = document.getElementById('tabAlugar');
+    const tabComprar = document.getElementById('tabComprar');
+    tabComprar.addEventListener('click', () => { heroPurpose='SALE'; tabComprar.classList.add('active'); tabAlugar.classList.remove('active'); });
+    tabAlugar.addEventListener('click', () => { heroPurpose='RENT'; tabAlugar.classList.add('active'); tabComprar.classList.remove('active'); });
+    const heroInput = document.getElementById('heroQuery');
+    function submitHeroSearch(){
+      const type = document.getElementById('heroType').value;
+      const raw = (heroInput.value || '').trim();
+      const usp = new URLSearchParams();
+      if (type) usp.set('type', type);
+      if (heroPurpose) usp.set('purpose', heroPurpose);
+      if (raw) usp.set('q', raw);
+      location.href = `busca.html?${usp.toString()}`;
+    }
+    document.getElementById('heroBuscar').addEventListener('click', submitHeroSearch);
+    heroInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); submitHeroSearch(); }});
+
+    function placeholderImg(){
+      const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='400' height='300'>`
+        + `<rect width='400' height='300' fill='#e5e7eb'/>`
+        + `<text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='#6b7280' font-family='Arial' font-size='20'>Imóvel</text>`
+        + `</svg>`;
+      return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+    }
+    function labelType(t){ switch(String(t||'').toUpperCase()){ case 'HOUSE': return 'Casa'; case 'APARTMENT': return 'Apartamento'; case 'LAND': return 'Terreno'; default: return t||''; } }
+    function labelPurpose(x){ switch(String(x||'').toUpperCase()){ case 'SALE': return 'Venda'; case 'RENT': return 'Aluguel'; default: return x||''; } }
+
+    function cardHtml(p){
+      const price = p.price!=null ? Number(p.price).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}) : '';
+      const badge = p.certificate_verified ? ' • Certidão verificada' : '';
+      let cover = p.cover_path ? (p.cover_path.startsWith('http')?p.cover_path:`${API}${p.cover_path}`) : placeholderImg();
+      return `
+        <div class="card">
+          <img src="${cover}" alt="Imagem do imóvel"/>
+          <div class="body">
+            <div class="title">${p.title||'Imóvel'}</div>
+            <div class="meta">${price} - ${p.city||''}/${p.state||''} &bull; ${labelType(p.type)} &bull; ${labelPurpose(p.purpose)}${badge}</div>
+            <div class="actions">
+              <a href="imovel.html?id=${p.id}">Ver detalhes</a>
+              <a href="mapa.html#${p.lat},${p.lng}">Ver no mapa</a>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    async function loadFeatured(){
+      try {
+        const res = await fetch(`${API}/imoveis?sort=priceDesc`);
+        const data = res.ok ? await res.json() : [];
+        const featured = document.getElementById('featured');
+        const items = data.slice(0,10);
+        featured.innerHTML = items.map(cardHtml).join('');
+      } catch {}
+    }
+
+    async function initMap(){
+      try { if (L && L.Icon && L.Icon.Default){ L.Icon.Default.imagePath=''; L.Icon.Default.mergeOptions({ iconUrl:'/vendor/leaflet/images/marker-icon.png', iconRetinaUrl:'/vendor/leaflet/images/marker-icon-2x.png', shadowUrl:'/vendor/leaflet/images/marker-shadow.png' }); } } catch{}
+      const map = L.map('homeMap').setView([-15.78,-47.93], 12);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap'}).addTo(map);
+      const layer = L.layerGroup().addTo(map);
+      async function loadInView(){
+        const b = map.getBounds(); const bbox = [b.getWest(),b.getSouth(),b.getEast(),b.getNorth()].join(',');
+        let items = [];
+        try { const res = await fetch(`${API}/imoveis/map?bbox=${bbox}`); if (res.ok) items = await res.json(); } catch{}
+        layer.clearLayers(); items.forEach(p=>{ const m=L.marker([p.lat,p.lng]); const price=p.price!=null?Number(p.price).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}):''; m.bindPopup(`<b>${p.title||'Im&oacute;vel'}</b><br/>${price}`); layer.addLayer(m); });
+      }
+      map.on('moveend', loadInView); loadInView();
+    }
+
+    document.addEventListener('DOMContentLoaded', ()=>{ try { if (window.XAuthUI) XAuthUI.applyNav(); } catch(e){} loadFeatured(); initMap(); });
+  </script>
+</body>
+</html>
+

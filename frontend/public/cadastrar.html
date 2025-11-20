@@ -1,0 +1,526 @@
+﻿<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>XIm&oacute;veis - Cadastrar Im&oacute;vel</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="vendor/leaflet/leaflet.css" />
+  <script defer src="js/auth-ui.js"></script>
+  <script defer src="js/locations-br.js"></script>
+  <script defer src="js/cadastrar-dnd.js"></script>
+  <script>
+    (function(){
+      try {
+        var u = sessionStorage.getItem('authUser');
+        u = u ? JSON.parse(u) : null;
+        var role = u && String(u.role||'').toUpperCase();
+        if (!u || (role!=='BROKER' && role!=='AGENCY')) { location.replace('login.html'); }
+      } catch(e){ location.replace('login.html'); }
+    })();
+  </script>
+  <script src="vendor/leaflet/leaflet.js"></script>
+</head>
+<body>
+  <header data-app-header>
+    <a class="logo" href="index.html"><img src="assets/logo.png" alt="XIm&oacute;veis" style="height:28px"/></a>
+    <nav>
+      <a href="index.html">In&iacute;cio</a>
+      <a href="busca.html">Buscar</a>
+      <a href="mapa.html">Mapa</a>
+      <a href="cadastrar.html" class="nav-auth nav-agent">Cadastrar</a>
+      <a href="meus-imoveis.html" class="nav-auth nav-agent">Meus im&oacute;veis</a>
+      <a href="admin-dashboard.html" class="nav-admin">Admin</a>
+      <a href="login.html" id="authLink" class="nav-guest">Entrar</a>
+    </nav>
+  </header>
+  <div class="container">
+    <div class="card">
+      <h2>Cadastrar Im&oacute;vel</h2>
+      <p class="mb-2">Envie a certid&atilde;o de matr&iacute;cula (PDF), adicione fotos e marque a localiza&ccedil;&atilde;o no mapa. Preencha os detalhes para agilizar a publica&ccedil;&atilde;o.</p>
+      <div class="layout" style="grid-template-columns: 280px 1fr; align-items:start;">
+        <aside>
+          <h3 class="mb-1">Fotos</h3>
+          <input type="file" id="photos" name="photos" accept="image/*" multiple />
+          <div class="inline-hints">Selecione at&eacute; 50 imagens (JPG/PNG/WEBP).</div>
+          <div id="photoPreview" class="mt-2" style="display:grid; grid-template-columns: 1fr; gap:8px; max-height:560px; overflow:auto;">
+            <!-- thumbs -->
+          </div>
+          <div id="currentPhotos" class="mt-2" style="display:grid; grid-template-columns: 1fr; gap:8px;"></div>
+        </aside>
+        <form id="formImovel">
+          <div class="row">
+            <input type="text" name="title" placeholder="T&iacute;tulo do an&uacute;ncio" style="flex:1" required />
+            <input type="text" name="price" placeholder="Pre&ccedil;o (R$)" inputmode="decimal" style="min-width: 180px;" required />
+          </div>
+          <div class="row mt-2">
+            <input type="text" name="postal_code" id="postalCode" placeholder="CEP" inputmode="numeric" maxlength="9" style="flex:0 0 140px;" />
+            <input type="text" name="address" placeholder="Endere&ccedil;o (rua)" style="flex:1" />
+            <input type="text" name="address_number" placeholder="N&uacute;mero" style="flex:0 0 110px;" />
+            <input type="text" name="neighborhood" placeholder="Bairro" style="flex:1" />
+          </div>
+          <div class="row mt-2">
+            <select id="state" name="state" required>
+              <option value="">UF</option>
+            </select>
+            <select id="city" name="city" class="hide-when-disabled" required disabled>
+              <option value="">Cidade</option>
+            </select>
+          </div>
+          <div class="row mt-2">
+            <select name="purpose" required>
+              <option value="SALE">Venda</option>
+              <option value="RENT">Aluguel</option>
+            </select>
+            <select name="type" required>
+              <option value="HOUSE">Casa</option>
+              <option value="APARTMENT">Apartamento</option>
+              <option value="LAND">Terreno</option>
+            </select>
+          </div>
+          <div class="row mt-2">
+            <input type="number" name="bedrooms" placeholder="Quartos" min="0" />
+            <input type="number" name="bathrooms" placeholder="Banheiros" min="0" />
+            <input type="number" name="suites" placeholder="Su&iacute;tes" min="0" />
+            <input type="number" name="parking_spaces" placeholder="Vagas" min="0" />
+          </div>
+          <div class="row mt-2">
+            <input type="text" name="area_m2" placeholder="&Aacute;rea (m&sup2;)" inputmode="decimal" />
+            <input type="text" name="lot_size_m2" placeholder="&Aacute;rea do lote (m&sup2;)" inputmode="decimal" />
+            <input type="number" name="year_built" placeholder="Ano de constru&ccedil;&atilde;o" min="1800" max="2100" />
+            <input type="number" name="floor" placeholder="Andar" min="0" />
+          </div>
+          <div class="row mt-2">
+            <input type="number" name="maintenance_fee" placeholder="Condom&iacute;nio (R$)" step="0.01" />
+            <input type="number" name="iptu" placeholder="IPTU (R$)" step="0.01" />
+          </div>
+          <div class="mt-2">
+            <textarea name="description" rows="4" placeholder="Descri&ccedil;&atilde;o do im&oacute;vel"></textarea>
+          </div>
+          <div class="mb-2 mt-2">
+            <label>Localiza&ccedil;&atilde;o (clique no mapa)</label>
+            <div id="map" style="height:360px; border:1px solid var(--border); border-radius:6px; margin-top:6px;"></div>
+            <div class="row mt-2">
+              <input type="number" id="lat" name="lat" placeholder="Lat" step="any" style="flex:0 0 160px;" required />
+              <input type="number" id="lng" name="lng" placeholder="Lng" step="any" style="flex:0 0 160px;" required />
+              <button type="button" id="geoBtn">Usar minha localiza&ccedil;&atilde;o</button>
+            </div>
+          </div>
+          <div class="mb-2">
+            <label>Certid&atilde;o de matr&iacute;cula (PDF)</label>
+            <input type="file" name="certidao" accept="application/pdf" required />
+            <div id="certInfo" class="mt-2 small-text"></div>
+          </div>
+          <div class="row mt-2" style="align-items:center; gap:10px;">
+            <button type="submit" class="btn">Enviar</button>
+            <div id="msg" class="mt-2"></div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <footer>&copy; XIm&oacute;veis. Todos os direitos reservados.</footer>
+  <script>
+    function applyNavSafe(){
+      try {
+        if (window.XAuthUI && typeof XAuthUI.applyNav === 'function') {
+          XAuthUI.applyNav();
+        }
+      } catch(e){}
+    }
+    const numberFormatters = {};
+    function getFormatter(decimals){
+      var key = 'd' + decimals;
+      if (!numberFormatters[key]) {
+        numberFormatters[key] = new Intl.NumberFormat('pt-BR', {
+          minimumFractionDigits: decimals,
+          maximumFractionDigits: decimals
+        });
+      }
+      return numberFormatters[key];
+    }
+    function normalizeDecimalValue(value){
+      if (value == null) return null;
+      var raw = String(value).trim();
+      if (!raw) return null;
+      var normalized = raw.replace(/\s+/g,'').replace(/\./g,'').replace(',', '.');
+      var num = Number(normalized);
+      return Number.isFinite(num) ? num : null;
+    }
+    function formatNumericValue(el, decimals){
+      if (!el) return;
+      var num = normalizeDecimalValue(el.value);
+      if (num == null) { el.value = ''; return; }
+      el.value = getFormatter(decimals).format(num);
+      el.dataset.numericValue = num.toFixed(decimals);
+    }
+    function prepareNumericForSubmit(el, decimals){
+      var num = normalizeDecimalValue(el && el.value);
+      return num == null ? '' : num.toFixed(decimals);
+    }
+    function attachAutoFormat(selector, decimals){
+      var el = document.querySelector(selector);
+      if (!el) return;
+      el.setAttribute('inputmode','decimal');
+      el.addEventListener('focus', function(){
+        var num = normalizeDecimalValue(el.value);
+        if (num == null) return;
+        el.value = num.toFixed(decimals).replace('.', ',');
+      });
+      el.addEventListener('input', function(){
+        var value = el.value || '';
+        value = value.replace(/[^0-9.,]/g,'');
+        var parts = value.split(/[,\.]/);
+        if (parts.length > 1) {
+          value = parts.shift() + ',' + parts.join('').replace(/[,\.]/g,'');
+        }
+        el.value = value;
+      });
+      el.addEventListener('blur', function(){ formatNumericValue(el, decimals); });
+      formatNumericValue(el, decimals);
+    }
+    function formatCepInput(value){
+      var digits = (value || '').replace(/\D/g,'').slice(0,8);
+      if (digits.length > 5) return digits.slice(0,5) + '-' + digits.slice(5);
+      return digits;
+    }
+    function attachCepLookup(){
+      var cepInput = document.getElementById('postalCode');
+      if (!cepInput) return;
+      var lastCep = '';
+      function autoFillFromCep(data){
+        if (!data) return;
+        var address = document.querySelector('input[name="address"]');
+        var neigh = document.querySelector('input[name="neighborhood"]');
+        if (address && data.logradouro) address.value = data.logradouro;
+        if (neigh && data.bairro) neigh.value = data.bairro;
+        var ufSel = document.getElementById('state');
+        if (ufSel && data.uf) {
+          ufSel.value = data.uf.toUpperCase();
+          ufSel.dispatchEvent(new Event('change'));
+          setTimeout(function(){
+            var citySel = document.getElementById('city');
+            if (citySel) {
+              citySel.disabled = false;
+              citySel.value = data.localidade || '';
+            }
+          }, 200);
+        }
+      }
+      async function fetchCepInfo(cep){
+        try {
+          var resp = await fetch('https://viacep.com.br/ws/' + cep + '/json/');
+          if (!resp.ok) return;
+          var data = await resp.json();
+          if (data && !data.erro) {
+            autoFillFromCep(data);
+          }
+        } catch(e){}
+      }
+      cepInput.addEventListener('input', function(){
+        cepInput.value = formatCepInput(cepInput.value);
+      });
+      cepInput.addEventListener('blur', function(){
+        var digits = (cepInput.value || '').replace(/\D/g,'');
+        if (digits.length === 8 && digits !== lastCep) {
+          lastCep = digits;
+          fetchCepInfo(digits);
+        }
+      });
+    }
+    document.addEventListener('DOMContentLoaded', function(){
+      applyNavSafe();
+      try {
+        if (window.LocationsBR && typeof LocationsBR.attachLinked === 'function') {
+          LocationsBR.attachLinked('state','city');
+        }
+      } catch(e){}
+      var uf = document.getElementById('state');
+      function ensureUFOptions(){
+        if (!uf) return;
+        if (uf.options && uf.options.length > 1) return;
+        var list = 'AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR SC SP SE TO'.split(' ');
+        list.forEach(function(sig){
+          var opt = document.createElement('option');
+          opt.value = sig;
+          opt.textContent = sig;
+          uf.appendChild(opt);
+        });
+      }
+      ensureUFOptions();
+      attachAutoFormat('input[name="price"]', 2);
+      attachAutoFormat('input[name="area_m2"]', 2);
+      attachAutoFormat('input[name="lot_size_m2"]', 2);
+      attachCepLookup();
+      try {
+        var usp = new URLSearchParams(location.search);
+        var idParam = Number(usp.get('id')||'');
+        var mode = (usp.get('mode')||'').toLowerCase();
+        var isEdit = !!idParam && mode === 'edit';
+        window.EDIT_ID = isEdit ? idParam : null;
+        if (isEdit) {
+          var h2 = document.querySelector('.card h2');
+          if (h2) h2.textContent = 'Editar Im&oacute;vel';
+          var btn = document.querySelector('#formImovel button[type="submit"]');
+          if (btn) btn.textContent = 'Salvar altera&ccedil;&otilde;es';
+          var certInput = document.querySelector('input[name="certidao"]');
+          if (certInput) certInput.removeAttribute('required');
+          fetch((window.API_BASE||'http://localhost:3000') + '/imoveis/' + idParam)
+            .then(function(r){ return r.ok ? r.json() : null; })
+            .then(function(payload){
+              var prop = payload && (payload.property || payload);
+              if (!prop) return;
+              var setVal = function(sel, val){
+                var el = document.querySelector(sel);
+                if (el) el.value = val!=null ? String(val) : '';
+              };
+              setVal('input[name="title"]', prop.title || '');
+              setVal('input[name="price"]', prop.price!=null ? prop.price : '');
+              setVal('input[name="address"]', prop.address || '');
+              setVal('input[name="address_number"]', prop.address_number || '');
+              setVal('input[name="neighborhood"]', prop.neighborhood || '');
+              setVal('input[name="postal_code"]', prop.postal_code || '');
+              setVal('select[name="purpose"]', (prop.purpose||'').toUpperCase());
+              setVal('select[name="type"]', (prop.type||'').toUpperCase());
+              setVal('input[name="bedrooms"]', prop.bedrooms!=null ? prop.bedrooms : '');
+              setVal('input[name="bathrooms"]', prop.bathrooms!=null ? prop.bathrooms : '');
+              setVal('input[name="suites"]', prop.suites!=null ? prop.suites : '');
+              setVal('input[name="parking_spaces"]', prop.parking_spaces!=null ? prop.parking_spaces : '');
+              setVal('input[name="area_m2"]', prop.area_m2!=null ? prop.area_m2 : '');
+              setVal('input[name="lot_size_m2"]', prop.lot_size_m2!=null ? prop.lot_size_m2 : '');
+              setVal('input[name="year_built"]', prop.year_built!=null ? prop.year_built : '');
+              setVal('input[name="floor"]', prop.floor!=null ? prop.floor : '');
+              setVal('input[name="maintenance_fee"]', prop.maintenance_fee!=null ? prop.maintenance_fee : '');
+              setVal('input[name="iptu"]', prop.iptu!=null ? prop.iptu : '');
+              setVal('textarea[name="description"]', prop.description || '');
+              formatNumericValue(document.querySelector('input[name="price"]'), 2);
+              formatNumericValue(document.querySelector('input[name="area_m2"]'), 2);
+              formatNumericValue(document.querySelector('input[name="lot_size_m2"]'), 2);
+              var cepInput = document.getElementById('postalCode');
+              if (cepInput && cepInput.value) {
+                cepInput.value = formatCepInput(cepInput.value);
+              }
+              var ufSel = document.getElementById('state');
+              if (ufSel) {
+                ufSel.value = (prop.state||'').toUpperCase();
+                ufSel.dispatchEvent(new Event('change'));
+                setTimeout(function(){
+                  var citySel = document.getElementById('city');
+                  if (citySel) {
+                    citySel.disabled = false;
+                    citySel.value = prop.city || '';
+                  }
+                }, 200);
+              }
+              if (prop.lat!=null && prop.lng!=null) {
+                try {
+                  document.getElementById('lat').value = Number(prop.lat).toFixed(6);
+                  document.getElementById('lng').value = Number(prop.lng).toFixed(6);
+                  setLatLng(prop.lat, prop.lng);
+                } catch(e){}
+              }
+              var box = document.getElementById('currentPhotos');
+              var photos = Array.isArray(payload && payload.photos) ? payload.photos : [];
+              if (box) {
+                if (photos.length) {
+                  box.innerHTML = '<div style="font-weight:600;color:#0b1220;">Fotos enviadas</div>' + photos.map(function(u){
+                    var src = /^https?:\/\//i.test(u) ? u : ((window.API_BASE||'') + u);
+                    return '<img src="' + src + '" alt="Foto" style="width:100%;height:120px;object-fit:cover;border:1px solid var(--border);border-radius:8px;" />';
+                  }).join('');
+                } else {
+                  box.innerHTML = '';
+                }
+              }
+              var info = document.getElementById('certInfo');
+              if (info) {
+                info.textContent = 'Certid&atilde;o j&aacute; enviada para este im&oacute;vel.';
+              }
+            }).catch(function(){});
+        }
+      } catch(e){}
+    });
+    var API = window.API_BASE || 'http://localhost:3000';
+    try {
+      if (window.L && L.Icon && L.Icon.Default) {
+        L.Icon.Default.imagePath = '';
+        L.Icon.Default.mergeOptions({
+          iconUrl:'/vendor/leaflet/images/marker-icon.png',
+          iconRetinaUrl:'/vendor/leaflet/images/marker-icon-2x.png',
+          shadowUrl:'/vendor/leaflet/images/marker-shadow.png'
+        });
+      }
+    } catch(e){}
+    var map = L.map('map', { zoomControl: true }).setView([-15.78,-47.93], 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap'}).addTo(map);
+    var marker = null;
+    function setLatLng(lat,lng){
+      var latEl = document.getElementById('lat');
+      var lngEl = document.getElementById('lng');
+      if (latEl && lngEl) {
+        latEl.value = Number(lat).toFixed(6);
+        lngEl.value = Number(lng).toFixed(6);
+      }
+      if (!marker) {
+        marker = L.marker([lat,lng]).addTo(map);
+      } else {
+        marker.setLatLng([lat,lng]);
+      }
+    }
+    map.on('click', function(e){ setLatLng(e.latlng.lat, e.latlng.lng); });
+    document.getElementById('geoBtn').addEventListener('click', function(){
+      if (!navigator.geolocation) {
+        alert('Geolocaliza&ccedil;&atilde;o indispon&iacute;vel');
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(function(pos){
+        var latitude = pos.coords.latitude;
+        var longitude = pos.coords.longitude;
+        setLatLng(latitude, longitude);
+        map.setView([latitude, longitude], 15);
+      }, function(){
+        alert('N&atilde;o foi poss&iacute;vel obter localiza&ccedil;&atilde;o');
+      });
+    });
+    var photosInput = document.getElementById('photos');
+    var previewBox = document.getElementById('photoPreview');
+    var revokeQueue = [];
+    function renderPreviews(){
+      if (!photosInput || !previewBox) return;
+      revokeQueue.forEach(function(url){ URL.revokeObjectURL(url); });
+      revokeQueue = [];
+      previewBox.innerHTML = '';
+      var files = photosInput.files || [];
+      var max = Math.min(files.length, 50);
+      for (var i=0;i<max;i++){
+        var f = files[i];
+        var url = URL.createObjectURL(f);
+        revokeQueue.push(url);
+        var wrap = document.createElement('div');
+        wrap.style.border = '1px solid var(--border)';
+        wrap.style.borderRadius = '8px';
+        wrap.style.overflow = 'hidden';
+        var img = document.createElement('img');
+        img.src = url;
+        img.alt = f.name;
+        img.style.width='100%';
+        img.style.height='140px';
+        img.style.objectFit='cover';
+        var cap = document.createElement('div');
+        cap.textContent = f.name;
+        cap.style.fontSize='12px';
+        cap.style.padding='6px 8px';
+        cap.style.whiteSpace='nowrap';
+        cap.style.textOverflow='ellipsis';
+        cap.style.overflow='hidden';
+        wrap.appendChild(img);
+        wrap.appendChild(cap);
+        previewBox.appendChild(wrap);
+      }
+    }
+    if (photosInput) {
+      photosInput.addEventListener('change', function(){
+        var files = photosInput.files || [];
+        if (files.length > 50) {
+          alert('Voc&ecirc; s&oacute; pode enviar at&eacute; 50 fotos.');
+          var dt = new DataTransfer();
+          for (var i=0;i<50;i++) dt.items.add(files[i]);
+          photosInput.files = dt.files;
+        }
+        renderPreviews();
+      });
+    }
+    var formEl = document.getElementById('formImovel');
+    formEl.addEventListener('submit', async function(e){
+      if (window.EDIT_ID) return;
+      e.preventDefault();
+      var fd = new FormData(formEl);
+      ['price','area_m2','lot_size_m2'].forEach(function(name){
+        var field = formEl.querySelector('[name="' + name + '"]');
+        var normalized = prepareNumericForSubmit(field, 2);
+        if (normalized) {
+          fd.set(name, normalized);
+        } else {
+          fd.delete(name);
+        }
+      });
+      if (photosInput && photosInput.files && photosInput.files.length){
+        for (var i=0;i<photosInput.files.length;i++){
+          fd.append('photos', photosInput.files[i]);
+        }
+      }
+      try {
+        var resp = await fetch(API + '/imoveis/cadastrar', {
+          method:'POST',
+          headers:{ Authorization: 'Bearer ' + (sessionStorage.getItem('authToken')||'') },
+          body: fd
+        });
+        var ok = resp.ok;
+        var msgEl = document.getElementById('msg');
+        if (msgEl) msgEl.textContent = ok ? 'Enviado com sucesso para revis&atilde;o.' : 'Falha ao enviar.';
+        if (ok) {
+          formEl.reset();
+          renderPreviews();
+          if (marker) { map.removeLayer(marker); marker = null; }
+        }
+      } catch(err){
+        var msg = document.getElementById('msg');
+        if (msg) msg.textContent = err.message || 'Erro no envio.';
+      }
+    });
+    formEl.addEventListener('submit', async function(e){
+      if (!window.EDIT_ID) return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      var msgEl = document.getElementById('msg');
+      var val = function(name){
+        var el = formEl.querySelector('[name="' + name + '"]');
+        return el ? el.value : '';
+      };
+      var numVal = function(name){
+        var el = formEl.querySelector('[name="' + name + '"]');
+        var num = normalizeDecimalValue(el && el.value);
+        return num == null ? null : num;
+      };
+      var body = {
+        title: val('title'),
+        price: numVal('price'),
+        address: val('address')||null,
+        address_number: val('address_number')||null,
+        neighborhood: val('neighborhood')||null,
+        postal_code: val('postal_code')||null,
+        state: val('state')||null,
+        city: val('city')||null,
+        purpose: val('purpose')||null,
+        type: val('type')||null,
+        bedrooms: Number(val('bedrooms')||0),
+        bathrooms: Number(val('bathrooms')||0),
+        suites: Number(val('suites')||0),
+        parking_spaces: Number(val('parking_spaces')||0),
+        area_m2: numVal('area_m2'),
+        lot_size_m2: numVal('lot_size_m2'),
+        year_built: val('year_built') ? Number(val('year_built')) : null,
+        floor: val('floor') ? Number(val('floor')) : null,
+        maintenance_fee: val('maintenance_fee') ? Number(val('maintenance_fee')) : null,
+        iptu: val('iptu') ? Number(val('iptu')) : null,
+        description: val('description') || null,
+        lat: val('lat') ? Number(val('lat')) : null,
+        lng: val('lng') ? Number(val('lng')) : null
+      };
+      try {
+        var resp = await fetch(API + '/imoveis/' + window.EDIT_ID, {
+          method:'PUT',
+          headers:{
+            'Content-Type':'application/json',
+            Authorization: 'Bearer ' + (sessionStorage.getItem('authToken')||'')
+          },
+          body: JSON.stringify(body)
+        });
+        var ok = resp.ok;
+        if (msgEl) msgEl.textContent = ok ? 'Atualizado; aguardando revis&atilde;o.' : 'Falha ao atualizar.';
+      } catch(err){
+        if (msgEl) msgEl.textContent = err.message || 'Erro ao atualizar.';
+      }
+    });
+  </script>
+</body>
+</html>

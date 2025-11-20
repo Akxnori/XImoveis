@@ -1,0 +1,250 @@
+﻿<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>XImóveis - Detalhes</title>
+  <link rel="stylesheet" href="vendor/leaflet/leaflet.css" />
+  <link rel="stylesheet" href="css/styles.css" />
+  <script defer src="js/auth-ui.js"></script>
+  <script src="vendor/leaflet/leaflet.js"></script>
+</head>
+<body class="page-imovel">
+  <header>
+    <a class="logo" href="index.html"><img src="assets/logo.png" alt="XImóveis" style="height:28px"/></a>
+    <nav>
+      <a href="index.html">Início</a>
+      <a href="busca.html">Buscar</a>
+      <a href="mapa.html">Mapa</a>
+      <a href="cadastrar.html" class="nav-auth nav-agent">Cadastrar</a>
+      <a href="meus-imoveis.html" class="nav-auth nav-agent">Meus imóveis</a>
+      <a href="admin-dashboard.html" class="nav-admin">Admin</a>
+      <a href="login.html" id="authLink" class="nav-guest">Entrar</a>
+    </nav>
+  </header>
+  <div class="container">
+    <div class="content">
+      <h1 id="title" style="margin-bottom:6px">Imóvel</h1>
+      <div id="meta" style="color:#6b7280"></div>
+      <div id="msg" class="loading"></div>
+    </div>
+
+    <div class="content imovel-main">
+      <section>
+        <div id="gallery" class="card gallery-hero">
+          <button id="prevBtn" aria-label="Anterior" class="btn nav-btn prev">‹</button>
+          <button id="nextBtn" aria-label="Próxima" class="btn nav-btn next">›</button>
+          <img id="cover" class="cover-img" alt="Imagem do imóvel"/>
+          <div id="thumbs" class="gallery-thumbs"></div>
+        </div>
+      </section>
+
+      <aside class="card" id="sideInfo">
+        <div id="owner" style="color:#6b7280; font-size:14px; margin-bottom:4px;"></div>
+        <div style="font-size:22px; font-weight:700;" id="price"></div>
+        <div class="mt-2" id="facts"></div>
+        <div id="contactCard" style="display:none; margin-top:16px; border-top:1px solid var(--border); padding-top:16px;">
+          <div style="font-size:13px; color:#6b7280; margin-bottom:6px;">Telefone do anunciante</div>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div style="width:36px; height:36px; border-radius:999px; background:#e0f2fe; display:flex; align-items:center; justify-content:center; font-size:18px; color:#0369a1;">☎</div>
+            <div id="ownerPhone" style="font-size:17px; font-weight:600; color:#0b1220;"></div>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <div class="content">
+      <div class="tabs">
+        <button data-tab="desc" class="active">Descrição</button>
+        <button data-tab="map">Localização do imóvel</button>
+        <button data-tab="history">Histórico do Imóvel</button>
+      </div>
+      <div id="tab-desc" class="tab active">
+        <p id="description" style="white-space:pre-wrap"></p>
+      </div>
+      <div id="tab-map" class="tab">
+        <div id="map" style="height:340px"></div>
+      </div>
+      <div id="tab-history" class="tab">
+        <ul id="historyList" class="history"></ul>
+      </div>
+    </div>
+
+    <div class="content mt-3">
+      <h2 class="mb-2">Imóveis similares</h2>
+      <div id="similarGrid" class="grid"></div>
+      <div id="similarMsg" class="mt-1"></div>
+    </div>
+  </div>
+  <footer>&copy; XImóveis. Todos os direitos reservados.</footer>
+  <script>
+    const API = window.API_BASE || 'http://localhost:3000';
+    function applyNavSafe(){ try { if (window.XAuthUI && typeof XAuthUI.applyNav==='function') XAuthUI.applyNav(); } catch{} }
+    document.addEventListener('DOMContentLoaded', applyNavSafe);
+    window.addEventListener('load', applyNavSafe);
+    setTimeout(applyNavSafe, 0);
+    const id = Number(new URLSearchParams(location.search).get('id'));
+    let LEAFLET_MAP = null; let MAP_LAT = null, MAP_LNG = null;
+    function setTab(name){
+      document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+      document.getElementById(`tab-${name}`).classList.add('active');
+      if (name === 'map' && LEAFLET_MAP) {
+        setTimeout(()=>{ try { LEAFLET_MAP.invalidateSize(); if (MAP_LAT!=null && MAP_LNG!=null) LEAFLET_MAP.setView([MAP_LAT, MAP_LNG], 15); } catch{} }, 80);
+      }
+    }
+    document.querySelectorAll('.tabs button').forEach(b=> b.addEventListener('click',()=> setTab(b.dataset.tab)));
+
+    function placeholderImage(){
+      const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='1200' height='400'>`
+        + `<rect width='1200' height='400' fill='#e5e7eb'/>`
+        + `<text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='#6b7280' font-family='Arial' font-size='26'>Imóvel</text>`
+        + `</svg>`;
+      return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+    }
+
+    function placeholderCard(){
+      const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='400' height='300'>`
+        + `<rect width='400' height='300' fill='#e5e7eb'/>`
+        + `<text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='#6b7280' font-family='Arial' font-size='18'>Imóvel</text>`
+        + `</svg>`;
+      return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+    }
+
+    async function fetchImovel(){
+      try { const res=await fetch(`${API}/imoveis/${id}`); if(res.ok) return await res.json(); } catch{}
+      return null;
+    }
+
+    (async function main(){
+      const payload = await fetchImovel();
+      const msg = document.getElementById('msg');
+      if (!payload) { msg.textContent = 'Não foi possível carregar este imóvel.'; return; }
+      const prop = payload.property || payload;
+      const photos = Array.isArray(payload.photos) ? payload.photos : [];
+
+      // Título + meta
+      document.getElementById('title').textContent = prop.title || 'Imóvel';
+      document.getElementById('meta').textContent = [prop.address, prop.neighborhood, [prop.city, prop.state].filter(Boolean).join('/')].filter(Boolean).join(' • ');
+
+      // Preço + fatos
+      const facts = [];
+      if (prop.bedrooms!=null) facts.push(`${prop.bedrooms} quarto(s)`);
+      if (prop.suites!=null) facts.push(`${prop.suites} suíte(s)`);
+      if (prop.bathrooms!=null) facts.push(`${prop.bathrooms} banheiro(s)`);
+      if (prop.parking_spaces!=null) facts.push(`${prop.parking_spaces} vaga(s)`);
+      if (prop.area_m2!=null) facts.push(`${Number(prop.area_m2)} m² úteis`);
+      const ownerName = prop.agency_name || prop.user_name || '';
+      const ownerEl = document.getElementById('owner');
+      if (ownerEl) ownerEl.textContent = ownerName ? 'Anunciado por ' + ownerName : '';
+      const ownerPhoneEl = document.getElementById('ownerPhone');
+      const contactCard = document.getElementById('contactCard');
+      const ownerPhone = prop.agency_phone || prop.user_phone || prop.phone || '';
+      if (ownerPhone && ownerPhoneEl && contactCard) {
+        ownerPhoneEl.textContent = ownerPhone;
+        contactCard.style.display = 'block';
+      } else if (contactCard && ownerPhoneEl) {
+        ownerPhoneEl.textContent = '';
+        contactCard.style.display = 'none';
+      }
+      document.getElementById('price').textContent = (prop.price!=null ? Number(prop.price).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}) : '');
+      document.getElementById('facts').innerHTML = facts.map(f=>`<div class="mt-1">• ${f}</div>`).join('');
+
+      // Galeria
+      const coverEl = document.getElementById('cover');
+      const thumbs = document.getElementById('thumbs');
+      let current = 0;
+      const urls = photos.map(u => u.startsWith('http') ? u : (API + u));
+      function show(i){
+        if (!urls.length) { coverEl.src = placeholderImage(); return; }
+        current = (i+urls.length)%urls.length;
+        coverEl.src = urls[current];
+        // destaque do thumb
+        [...thumbs.children].forEach((t,idx)=> t.style.outline = idx===current ? '2px solid #0b2b45' : 'none');
+      }
+      // render thumbs
+      thumbs.innerHTML = urls.map((u,idx)=>`<img data-idx="${idx}" src="${u}" alt="Foto ${idx+1}" style="width:86px; height:62px; object-fit:cover; border-radius:6px; cursor:pointer; border:1px solid var(--border);"/>`).join('');
+      thumbs.addEventListener('click', (e)=>{ const im=e.target.closest('img[data-idx]'); if(im) show(Number(im.dataset.idx)); });
+      document.getElementById('prevBtn').addEventListener('click', ()=> show(current-1));
+      document.getElementById('nextBtn').addEventListener('click', ()=> show(current+1));
+      if (urls.length) show(0); else coverEl.src = placeholderImage();
+
+      // Descrição
+      document.getElementById('description').textContent = prop.description || '';
+      msg.textContent = '';
+
+      // Mapa
+      if (prop.lat!=null && prop.lng!=null) {
+        try { if (L && L.Icon && L.Icon.Default){ L.Icon.Default.imagePath=''; L.Icon.Default.mergeOptions({ iconUrl:'/vendor/leaflet/images/marker-icon.png', iconRetinaUrl:'/vendor/leaflet/images/marker-icon-2x.png', shadowUrl:'/vendor/leaflet/images/marker-shadow.png' }); } } catch{}
+        MAP_LAT = prop.lat; MAP_LNG = prop.lng;
+        LEAFLET_MAP = L.map('map');
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap'}).addTo(LEAFLET_MAP);
+        LEAFLET_MAP.setView([MAP_LAT, MAP_LNG], 15);
+        L.marker([MAP_LAT, MAP_LNG]).addTo(LEAFLET_MAP).bindPopup(prop.title||'Imóvel');
+      }
+
+      // Similares
+      async function loadSimilar(){
+        try {
+          const similarMsg = document.getElementById('similarMsg');
+          const grid = document.getElementById('similarGrid');
+          similarMsg.textContent = 'Carregando similares...';
+          const base = new URL(`${API}/imoveis`, location.href);
+          const p = new URLSearchParams();
+          if (prop.city) p.set('city', prop.city);
+          if (prop.state) p.set('state', prop.state);
+          if (prop.type) p.set('type', prop.type);
+          if (prop.purpose) p.set('purpose', prop.purpose);
+          if (prop.price!=null) {
+            const price = Number(prop.price)||0; const delta = Math.max(50000, Math.round(price*0.25));
+            p.set('minPrice', Math.max(0, price-delta));
+            p.set('maxPrice', price+delta);
+          }
+          p.set('sort','newest');
+          base.search = p.toString();
+          const res = await fetch(base.toString());
+          const arr = res.ok ? await res.json() : [];
+          const items = arr.filter(x=> Number(x.id)!==Number(prop.id)).slice(0,8);
+          function card(p){
+            const img = p.cover_path ? (p.cover_path.startsWith('http')?p.cover_path:(API+p.cover_path)) : placeholderCard();
+            const price = p.price!=null ? Number(p.price).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}) : '';
+            return `
+              <div class="card">
+                <img src="${img}" alt="Imagem do imóvel"/>
+                <div class="body">
+                  <div class="title">${p.title||'Imóvel'}</div>
+                  <div class="meta">${price} - ${p.city||''}/${p.state||''}</div>
+                  <div class="actions">
+                    <a href="imovel.html?id=${p.id}">Ver detalhes</a>
+                  </div>
+                </div>
+              </div>`;
+          }
+          grid.innerHTML = items.map(card).join('');
+          similarMsg.textContent = items.length ? '' : 'Nenhum similar encontrado.';
+        } catch { document.getElementById('similarMsg').textContent = 'Falha ao carregar similares.'; }
+      }
+      loadSimilar();
+
+      // Histórico do imóvel
+      try {
+        const hist = Array.isArray(payload.history) ? payload.history : [];
+        const list = document.getElementById('historyList');
+        if (list) {
+          if (!hist.length) {
+            list.innerHTML = '<li>Nenhum histórico disponível.</li>';
+          } else {
+            const rows = hist.map(h => {
+              const dt = h.event_date ? new Date(h.event_date).toLocaleString('pt-BR') : '';
+              const type = String(h.event_type||'').replace(/_/g,' ');
+              const notes = (h.notes||'').toString();
+              return `<li><strong>${dt}</strong> — ${type}${notes?': '+notes:''}</li>`;
+            }).join('');
+            list.innerHTML = rows;
+          }
+        }
+      } catch {}
+    })();
+  </script>
+</body>
+</html>
+

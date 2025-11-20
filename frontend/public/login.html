@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>XIm&oacute;veis - Entrar</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <script defer src="js/auth-ui.js"></script>
+  <style>
+  .grid-2 { display:grid; grid-template-columns: 220px 1fr; gap:10px; align-items:center; }
+  .section-title { margin: 0; font-size: 18px; }
+  .section-sub { color:#6b7280; font-size: 13px; margin-top:4px; }
+  .inline-hints { color:#6b7280; font-size:12px; }
+  .group { background:#f8fafc; padding:10px; border:1px solid #e7e9ec; border-radius:10px; }
+  #brokerFields, #agencyFields { display: contents; }
+  </style>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => { if (window.XAuthUI) XAuthUI.applyNav(); });
+  </script>
+</head>
+<body>
+  <header>
+    <a class="logo" href="index.html"><img src="assets/logo.png" alt="XIm&oacute;veis" style="height:28px"/></a>
+    <nav>
+      <a href="index.html">In&iacute;cio</a>
+      <a href="busca.html">Buscar</a>
+      <a href="mapa.html">Mapa</a>
+      <a href="cadastrar.html" class="nav-auth nav-agent">Cadastrar</a>
+      <a href="meus-imoveis.html" class="nav-auth nav-agent">Meus im&oacute;veis</a>
+      <a href="admin-dashboard.html" class="nav-admin">Admin</a>
+      <a href="login.html" id="authLink" class="nav-guest">Entrar</a>
+    </nav>
+  </header>
+  <div class="container">
+    <div class="card">
+      <h2>Entrar</h2>
+      <div class="mt-2">
+        <label for="email">Email</label>
+        <input id="email" type="email" placeholder="email@exemplo.com" required />
+      </div>
+      <div class="mt-2">
+        <label for="password">Senha</label>
+        <input id="password" type="password" placeholder="Sua senha" required />
+      </div>
+      <div class="mt-2">
+        <button id="loginBtn" class="btn">Entrar</button>
+      </div>
+      <div id="loginMsg" class="mt-2"></div>
+    </div>
+
+    <div class="card mt-3">
+      <h2 class="section-title">Cadastro de Corretor/Imobili&aacute;ria</h2>
+      <div class="section-sub">Crie sua conta para anunciar e gerenciar im&oacute;veis.</div>
+      <div class="grid-2 mt-2">
+        <label for="role">Tipo de conta</label>
+        <select id="role">
+          <option value="BROKER">Corretor(a)</option>
+          <option value="AGENCY">Imobili&aacute;ria</option>
+        </select>
+
+        <label for="name" id="lblName">Nome</label>
+        <input id="name" type="text" placeholder="Seu nome" />
+
+        <label for="regEmail">Email</label>
+        <input id="regEmail" type="email" placeholder="email@exemplo.com" />
+
+        <label for="regPhone">Telefone</label>
+        <input id="regPhone" type="tel" placeholder="(00) 00000-0000" />
+
+        <label for="regPassword">Senha</label>
+        <input id="regPassword" type="password" placeholder="Crie uma senha" />
+
+        <div id="brokerFields">
+          <label for="cpf">CPF</label>
+          <input id="cpf" type="text" placeholder="000.000.000-00" />
+
+          <label for="creci">CRECI</label>
+          <input id="creci" type="text" placeholder="Seu CRECI" />
+        </div>
+
+        <div id="agencyFields" style="display:none">
+          <label for="cnpj">CNPJ</label>
+          <input id="cnpj" type="text" placeholder="00.000.000/0000-00" />
+
+          <label for="creciJuridico">CRECI Jur&iacute;dico</label>
+          <input id="creciJuridico" type="text" placeholder="CRECI da Imobili&aacute;ria" />
+
+          <label for="agencyName">Nome Fantasia</label>
+          <input id="agencyName" type="text" placeholder="Nome da Imobili&aacute;ria" />
+        </div>
+      </div>
+      <div class="mt-2">
+        <button id="registerBtn" class="btn">Criar conta</button>
+      </div>
+      <div id="regMsg" class="mt-2"></div>
+    </div>
+  </div>
+  <footer>&copy; XIm&oacute;veis. Todos os direitos reservados.</footer>
+
+  <script>
+    const API = window.API_BASE || ((window.location.origin && window.location.origin !== 'null') ? window.location.origin : 'http://localhost:3000');
+    function setNav(){ if (window.XAuthUI && typeof XAuthUI.applyNav === 'function') XAuthUI.applyNav(); }
+
+    async function doLogin(email, password) {
+      const res = await fetch(`${API}/auth/login`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email, password }) });
+      const data = await res.json().catch(()=>({}));
+      if (!res.ok) throw new Error(data.error || 'Credenciais inv&aacute;lidas');
+      sessionStorage.setItem('authToken', data.token);
+      sessionStorage.setItem('authUser', JSON.stringify(data.user));
+      setNav();
+      const role = data.user.role;
+      location.href = role === 'ADMIN' ? 'admin-dashboard.html' : 'index.html';
+    }
+
+    document.getElementById('loginBtn').addEventListener('click', async () => {
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const out = document.getElementById('loginMsg'); out.textContent='';
+      try { await doLogin(email, password); } catch (e) { out.textContent = e.message; }
+    });
+
+    const roleSel = document.getElementById('role');
+    function toggleRole(){
+      const isAgency = roleSel.value==='AGENCY';
+      document.getElementById('brokerFields').style.display = isAgency ? 'none' : '';
+      document.getElementById('agencyFields').style.display = isAgency ? '' : 'none';
+      const lbl = document.getElementById('lblName');
+      const nameInput = document.getElementById('name');
+      if (lbl && nameInput){
+        if (isAgency) { lbl.textContent = 'Nome do operador'; nameInput.placeholder = 'Seu nome'; }
+        else { lbl.textContent = 'Nome'; nameInput.placeholder = 'Seu nome'; }
+      }
+    }
+    roleSel.addEventListener('change', toggleRole); toggleRole();
+
+    async function doRegister(){
+      const role = roleSel.value;
+      const body = {
+        role,
+        name: document.getElementById('name').value.trim(),
+        email: document.getElementById('regEmail').value.trim(),
+        password: document.getElementById('regPassword').value,
+        phone: document.getElementById('regPhone').value.trim()
+      };
+      if (role==='BROKER') { body.cpf = document.getElementById('cpf').value.trim(); body.creci = document.getElementById('creci').value.trim(); }
+      if (role==='AGENCY') {
+        body.cnpj = document.getElementById('cnpj').value.trim();
+        body.creciJuridico = document.getElementById('creciJuridico').value.trim();
+        body.agencyName = document.getElementById('agencyName').value.trim();
+        if (!body.agencyName) { throw new Error('Informe o Nome Fantasia da Imobiliária'); }
+      }
+      const out = document.getElementById('regMsg'); out.textContent='';
+      try {
+        const r = await fetch(`${API}/auth/register`, { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(body) });
+        const payload = await r.json().catch(()=>({}));
+        if (!r.ok) throw new Error(payload.error || 'Falha no cadastro');
+        out.textContent = 'Cadastro realizado com sucesso. Você já pode fazer login.';
+      } catch (e) {
+        out.textContent = e.message || 'Não foi possível cadastrar agora.';
+      }
+    }
+    document.getElementById('registerBtn').addEventListener('click', doRegister);
+
+    function onlyDigits(v){ return String(v||'').replace(/\D+/g,''); }
+    function formatCPF(v){
+      const d = onlyDigits(v).slice(0,11);
+      return d
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+    }
+    function formatCNPJ(v){
+      const d = onlyDigits(v).slice(0,14);
+      return d
+        .replace(/(\d{2})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d)/, '$1/$2')
+        .replace(/(\d{4})(\d{1,2})$/, '$1-$2');
+    }
+    const cpfInput = document.getElementById('cpf'); if (cpfInput) cpfInput.addEventListener('input',()=>{ cpfInput.value = formatCPF(cpfInput.value); });
+    const cnpjInput = document.getElementById('cnpj'); if (cnpjInput) cnpjInput.addEventListener('input',()=>{ cnpjInput.value = formatCNPJ(cnpjInput.value); });
+    const phoneInput = document.getElementById('regPhone');
+    if (phoneInput) phoneInput.addEventListener('input', ()=>{
+      const d = onlyDigits(phoneInput.value).slice(0,11);
+      let v = d;
+      if (d.length > 10) v = d.replace(/(\d{2})(\d{5})(\d{0,4}).*/, '($1) $2-$3');
+      else if (d.length > 6) v = d.replace(/(\d{2})(\d{4})(\d{0,4}).*/, '($1) $2-$3');
+      else if (d.length > 2) v = d.replace(/(\d{2})(\d{0,5}).*/, '($1) $2');
+      else if (d.length > 0) v = d.replace(/(\d{0,2}).*/, '($1');
+      phoneInput.value = v;
+    });
+  </script>
+</body>
+</html>
